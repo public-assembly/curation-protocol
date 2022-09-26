@@ -15,9 +15,13 @@ interface ICurator {
 
     event TokenPassUpdated(address indexed owner, address tokenPass);
 
+    event CurationLimitUpdated(address indexed owner, uint40 curationLimit);
+
     event CurationPaused(address indexed owner);
 
     event CurationResumed(address indexed owner);
+
+    event CurationFrozen(address indexed owner);
 
     error PASS_REQUIRED();
 
@@ -29,10 +33,13 @@ interface ICurator {
 
     error LISTING_EXISTS();
 
+    error CURATION_LIMIT_EXCEEDED();
+
     function initialize(
         address manager,
         string memory title,
         address tokenPass,
+        uint40 curationLimt,
         bool pause
     ) external;
 }
@@ -46,7 +53,11 @@ contract CuratorStorageV1 {
 
     uint40 internal numRemoved;
 
+    uint40 internal curationLimit;
+
     bool internal isPaused;
+
+    bool internal isFrozen = false;
 
     /// @dev Listing id => Listing address
     mapping(uint256 => address) internal idToListing;
@@ -56,6 +67,7 @@ contract CuratorStorageV1 {
 
     /// @dev Listing address => Curator
     mapping(address => address) internal curators;
+
 }
 
 contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
@@ -69,6 +81,7 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         address _owner,
         string memory _title,
         address _tokenPass,
+        uint40 _curationLimit,
         bool _pause
     ) external initializer {
         __Ownable_init(_owner);
@@ -76,6 +89,8 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         title = _title;
 
         tokenPass = IERC721(_tokenPass);
+
+        curationLimit = _curationLimit;
 
         if (_pause) {
             isPaused = true;
@@ -103,16 +118,42 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
     }
 
     function addListing(address _listing) external {
+        if (isFrozen) revert CURATION_FROZEN();
+
+        if (msg.sender == owner()) {
+            _addListing(_listing);
+            return;
+        }
+
         if (isPaused) revert CURATION_PAUSED();
 
         if (tokenPass.balanceOf(msg.sender) == 0) revert PASS_REQUIRED();
 
+        if (numAdded - numRemoved == curationLimit) revert CURATION_LIMIT_EXCEEDED();
+
         _addListing(_listing);
     }
 
-    function ownerAddListing(address _listing) external onlyOwner {
-        _addListing(_listing);
-    }
+    function batchAddListing(address[] _listings) external {
+        if (isFrozen) revert CURATION_FROZEN();        
+
+        if (msg.sender == owner()) {
+            for (uint256 i; i < _listings.length; ++i) {
+                if (numAdded - numRemoved == curationLimit) revert CURATION_LIMIT_EXCEEDED();                
+                _addListing(_listings[i]);
+            }
+            return;
+        }
+
+        if (isPaused) revert CURATION_PAUSED();
+
+        if (tokenPass.balanceOf(msg.sender) == 0) revert PASS_REQUIRED();
+
+        for (uint256 i; i < _listings.length; ++i) {
+            if (numAdded - numRemoved == curationLimit) revert CURATION_LIMIT_EXCEEDED();            
+            _addListing(_listings[i]);
+        }
+    }        
 
     function _addListing(address _listing) internal {
         if (curators[_listing] != address(0)) revert LISTING_EXISTS();
@@ -133,6 +174,13 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
     }
 
     function removeListing(address _listing) external {
+        if (isFrozen) revert CURATION_FROZEN();        
+
+        if (msg.sender == owner()) {
+            _removeListing(_listing);
+            return;
+        }
+
         if (isPaused) revert CURATION_PAUSED();
 
         if (msg.sender != curators[_listing]) revert ONLY_CURATOR();
@@ -140,9 +188,21 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         _removeListing(_listing);
     }
 
-    function ownerRemoveListing(address _listing) external onlyOwner {
-        _removeListing(_listing);
-    }
+    function batchRemoveListing(address[] _listings) external {
+        if (msg.sender == owner()) {
+            for (uint256 i; i < _listings.length; ++i) {
+                _removeListing(_listings[i]);
+            }
+            return;
+        }
+
+        if (isPaused) revert CURATION_PAUSED();
+
+        for (uint256 i; i < _listings.length; ++i) {
+            if (msg.sender != curators[_listings[i]]) revert ONLY_CURATOR();
+            _removeListing(_listings[i]);
+        }
+    }        
 
     function _removeListing(address _listing) internal {
         uint256 id = listingToId[_listing];
@@ -172,6 +232,12 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         emit TokenPassUpdated(msg.sender, address(_tokenPass));
     }
 
+    function updateCurationLimit(uint40 _curationLimit) public onlyOwner {
+        curationLimit = _curationLimit;
+
+        emit CurationLimitUpdated(msg.sender, _curationLimit);
+    }
+
     function pauseCuration() public onlyOwner {
         isPaused = true;
 
@@ -184,7 +250,14 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         emit CurationResumed(msg.sender);
     }
 
+    function freezeCuration() public onlyOwner {
+        isFrozen = true;
+
+        emit CurationFrozen(msg.sender);
+    }    
+
     function _authorizeUpgrade(address _newImpl) internal view override onlyOwner {
         if (!curatorFactory.isValidUpgrade(_getImplementation(), _newImpl)) revert INVALID_UPGRADE(_newImpl);
     }
+
 }

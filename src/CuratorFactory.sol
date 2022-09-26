@@ -36,11 +36,12 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         address _curationManager,
         string memory _title,
         address _tokenPass,
+        uint40 _curationLimit,
         bool _initialPause
     ) external returns (address curator) {
         curator = address(new ERC1967Proxy(curatorImpl, ""));
 
-        ICurator(curator).initialize(_curationManager, _title, _tokenPass, _initialPause);
+        ICurator(curator).initialize(_curationManager, _title, _tokenPass, _curationLimit, _initialPause);
 
         emit CuratorDeployed(curator);
     }

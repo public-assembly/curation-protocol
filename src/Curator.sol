@@ -120,6 +120,8 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
     function addListing(address _listing) external {
         if (isFrozen) revert CURATION_FROZEN();
 
+        if (numAdded - numRemoved == curationLimit) revert CURATION_LIMIT_EXCEEDED();        
+
         if (msg.sender == owner()) {
             _addListing(_listing);
             return;
@@ -128,8 +130,6 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
         if (isPaused) revert CURATION_PAUSED();
 
         if (tokenPass.balanceOf(msg.sender) == 0) revert PASS_REQUIRED();
-
-        if (numAdded - numRemoved == curationLimit) revert CURATION_LIMIT_EXCEEDED();
 
         _addListing(_listing);
     }
@@ -189,6 +189,8 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1 {
     }
 
     function batchRemoveListing(address[] _listings) external {
+        if (isFrozen) revert CURATION_FROZEN();        
+
         if (msg.sender == owner()) {
             for (uint256 i; i < _listings.length; ++i) {
                 _removeListing(_listings[i]);

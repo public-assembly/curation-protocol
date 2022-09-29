@@ -65,7 +65,8 @@ interface ICurator {
         string memory _name,
         string memory _symbol,
         address _tokenPass,
-        bool _pause
+        bool _pause,
+        uint256 _curationLimit
     ) external;
 }
 

@@ -53,6 +53,8 @@ contract CurationTestSetup is Test {
     }
 
     function deployMockCurator() internal {
+        ICurator.Listing[] memory listings = new ICurator.Listing[](0);
+
         address _curator = factory.deploy(
             mockCurationManager,
             "Mock Curation Contract",
@@ -61,7 +63,8 @@ contract CurationTestSetup is Test {
             false,
             0,
             address(0x0),
-            ""
+            "",
+            listings
         );
 
         curator = Curator(_curator);

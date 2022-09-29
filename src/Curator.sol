@@ -79,7 +79,8 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         bool _pause,
         uint256 _curationLimit,
         address _renderer,
-        bytes memory _rendererInitializer
+        bytes memory _rendererInitializer,
+        Listing[] memory _initialListings
     ) external initializer {
         __Ownable_init(_owner);
 
@@ -96,6 +97,27 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
         if (_curationLimit != 0) {
             _updateCurationLimit(_curationLimit);
+        }
+
+        if (_initialListings.length != 0) {
+            _addListings(_initialListings);
+        }
+    }
+
+    function getListings() external view returns (Listing[] memory activeListings) {
+        unchecked {
+            activeListings = new Listing[](numAdded - numRemoved);
+
+            uint256 activeIndex;
+
+            for (uint256 i; i < numAdded; ++i) {
+                if (idToListing[i].curator == address(0)) {
+                    continue;
+                }
+
+                activeListings[activeIndex] = idToListing[i];
+                ++activeIndex;
+            }
         }
     }
 
@@ -170,6 +192,10 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
             }
         }
 
+        _addListings(listings);
+    }
+
+    function _addListings(Listing[] memory listings) internal {
         if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
             revert HAS_TOO_MANY_ITEMS();
         }
@@ -181,23 +207,6 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
             idToListing[numAdded] = listings[i];
             idToListing[numAdded].curator = msg.sender;
             ++numAdded;
-        }
-    }
-
-    function getListings() external view returns (Listing[] memory activeListings) {
-        unchecked {
-            activeListings = new Listing[](numAdded - numRemoved);
-
-            uint256 activeIndex;
-
-            for (uint256 i; i < numAdded; ++i) {
-                if (idToListing[i].curator == address(0)) {
-                    continue;
-                }
-
-                activeListings[activeIndex] = idToListing[i];
-                ++activeIndex;
-            }
         }
     }
 

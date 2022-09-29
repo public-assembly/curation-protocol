@@ -65,6 +65,7 @@ interface ICurator {
         bool _pause,
         uint256 _curationLimit,
         address _renderer,
-        bytes memory _rendererInitializer
+        bytes memory _rendererInitializer,
+        Listing[] memory _initialListings
     ) external;
 }

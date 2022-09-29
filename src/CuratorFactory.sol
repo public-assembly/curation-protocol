@@ -37,7 +37,8 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         bool initialPause,
         uint256 curationLimit,
         address renderer,
-        bytes memory rendererInitializer
+        bytes memory rendererInitializer,
+        ICurator.Listing[] memory listings
     ) external returns (address curator) {
         if (renderer == address(0x0)) {
             renderer = defaultMetadataRenderer;
@@ -54,7 +55,8 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
                     initialPause,
                     curationLimit,
                     renderer,
-                    rendererInitializer
+                    rendererInitializer,
+                    listings
                 )
             )
         );

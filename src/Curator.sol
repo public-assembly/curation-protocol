@@ -9,7 +9,7 @@ import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 
 
 interface ICurator {
-    struct Listing {
+    struct  {
         address curatedContract;
         uint96 tokenId;
         address curator;
@@ -65,7 +65,9 @@ interface ICurator {
         string memory _name,
         string memory _symbol,
         address _tokenPass,
-        bool _pause
+        bool _pause,
+        uint256 _curationLimit,
+        Listing[] memory _initialLisitngs,
     ) external;
 }
 
@@ -121,7 +123,10 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         string memory _name,
         string memory _symbol,
         address _curationPass,
-        bool _pause
+        bool _pause,
+        uint256 _curationLimit,
+        Listing[] memory _initialListings
+
     ) external initializer {
         __Ownable_init(_owner);
 
@@ -133,6 +138,15 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         if (_pause) {
             _setCurationPaused(_pause);
         }
+
+        if (_curationLimit != 0) {
+            updateCurationLimit(_curationLimit);
+        }
+
+        if (_initialListings.length != 0) {
+            addListings(_initialListings);
+        }
+
     }
 
     function getListings() external view returns (Listing[] memory activeListings) {

@@ -4,7 +4,9 @@ pragma solidity 0.8.15;
 import "forge-std/Test.sol";
 
 import { CuratorFactory } from "../../src/CuratorFactory.sol";
+import { DefaultMetadataRenderer } from "../../src/DefaultMetadataRenderer.sol";
 import { Curator } from "../../src/Curator.sol";
+import { ICurator } from "../../src/interfaces/ICurator.sol";
 
 import { ERC1967Proxy } from "../../src/lib/proxy/ERC1967Proxy.sol";
 
@@ -17,13 +19,15 @@ contract CurationTestSetup is Test {
     address internal factoryImpl0;
     address internal factoryImpl;
     address internal curatorImpl;
+    address internal metadataRenderer;
     address internal zora;
 
     MockERC721 internal mockTokenPass;
 
     address internal mockPassHolder;
     address internal mockCurationManager;
-    address[] internal mockListings;
+
+    ICurator.Listing[] internal mockListings;
 
     function setUp() public virtual {
         zora = vm.addr(0xA11CE);
@@ -37,36 +41,46 @@ contract CurationTestSetup is Test {
     }
 
     function deployCore(address _owner) internal {
-        factoryImpl0 = address(new CuratorFactory(address(0)));
-        factory = CuratorFactory(address(new ERC1967Proxy(factoryImpl0, abi.encodeWithSignature("initialize(address)", _owner))));
+        metadataRenderer = address(new DefaultMetadataRenderer("https://default-metadata-renderer.com/"));
+        factoryImpl0 = address(new CuratorFactory(address(0), metadataRenderer));
+        factory = CuratorFactory(address(new ERC1967Proxy(factoryImpl0, abi.encodeWithSelector(CuratorFactory.initialize.selector, _owner))));
 
         curatorImpl = address(new Curator(address(factory)));
-        factoryImpl = address(new CuratorFactory(curatorImpl));
+        factoryImpl = address(new CuratorFactory(curatorImpl, metadataRenderer));
 
         vm.prank(_owner);
         factory.upgradeTo(factoryImpl);
     }
 
     function deployMockCurator() internal {
-        address _curator = factory.deploy(mockCurationManager, "Mock Curation Contract", address(mockTokenPass), false);
+        address _curator = factory.deploy(
+            mockCurationManager,
+            "Mock Curation Contract",
+            "MKCURATION",
+            address(mockTokenPass),
+            false,
+            0,
+            address(0x0),
+            ""
+        );
 
         curator = Curator(_curator);
     }
 
-    function createListings(uint256 _numListings) internal {
-        mockListings = new address[](_numListings);
+    function addBatchListings(uint256 _numListings) public {
+        ICurator.Listing[] memory listingsToAdd = new ICurator.Listing[](_numListings);
 
         unchecked {
-            for (uint256 i; i < _numListings; ++i) mockListings[i] = vm.addr(i + 1);
+            for (uint256 i; i < _numListings; ++i) {
+                mockListings.push();
+                mockListings[i].curator = mockCurationManager;
+                mockListings[i].curatedContract = address(0x123);
+                mockListings[i].hasTokenId = false;
+                mockListings[i].curationTargetType = curator.CURATION_TYPE_EOA_WALLET();
+            }
         }
-    }
 
-    function addBatchListings(uint256 _numListings) public {
-        createListings(_numListings);
-
-        for (uint256 i; i < _numListings; ++i) {
-            vm.prank(mockCurationManager);
-            curator.ownerAddListing(mockListings[i]);
-        }
+        vm.prank(mockCurationManager);
+        curator.addListings(listingsToAdd);
     }
 }

@@ -19,6 +19,8 @@ interface ICurator {
 
     event TokenPassUpdated(address indexed owner, address tokenPass);
 
+    event SetRenderer(address);
+
     event CurationPaused(address indexed owner);
 
     event CurationResumed(address indexed owner);
@@ -61,6 +63,8 @@ interface ICurator {
         string memory _symbol,
         address _tokenPass,
         bool _pause,
-        uint256 _curationLimit
+        uint256 _curationLimit,
+        address _renderer,
+        bytes memory _rendererInitializer
     ) external;
 }

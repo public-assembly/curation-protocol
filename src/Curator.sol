@@ -3,112 +3,65 @@ pragma solidity 0.8.15;
 
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { UUPS } from "./lib/proxy/UUPS.sol";
+import { ICurator } from "./interfaces/ICurator.sol";
 import { Ownable } from "./lib/utils/Ownable.sol";
-import { ICuratorFactory } from "./CuratorFactory.sol";
+import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
-
-
-interface ICurator {
-    struct  {
-        address curatedContract;
-        uint96 tokenId;
-        address curator;
-        uint16 curationTargetType;
-        int32 sortOrder;
-        bool hasTokenId;
-    }
-
-    event ListingAdded(address indexed curator, Listing listing);
-
-    event ListingRemoved(address indexed curator, Listing listing);
-
-    event TitleUpdated(address indexed owner, string title);
-
-    event TokenPassUpdated(address indexed owner, address tokenPass);
-
-    event CurationPaused(address indexed owner);
-
-    event CurationResumed(address indexed owner);
-
-    event UpdatedCurationLimit(uint256 newLimit);
-
-    event UpdatedSortOrder(uint256[], int32[], address);
-
-    event ScheduledFreeze(uint256);
-
-    event NameUpdated(string newName);
-
-    error PASS_REQUIRED();
-
-    error ONLY_CURATOR();
-
-    error CURATION_PAUSED();
-
-    error CURATION_FROZEN();
-
-    error LISTING_EXISTS();
-
-    error HAS_TOO_MANY_ITEMS();
-
-    error TOO_MANY_ENTRIES();
-
-    error NOT_ALLOWED();
-
-    error NO_OWNER();
-
-    error INVALID_INPUT_LENGTH();
-
-    error CANNOT_UPDATE_CURATION_LIMIT_DOWN();
-
-    function initialize(
-        address _owner,
-        string memory _name,
-        string memory _symbol,
-        address _tokenPass,
-        bool _pause,
-        uint256 _curationLimit,
-        Listing[] memory _initialLisitngs,
-    ) external;
-}
+import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 
 abstract contract CuratorStorageV1 is ICurator {
-    string public contractName;
-    string public contractSymbol;
+    string internal contractName;
+
+    string internal contractSymbol;
 
     IERC721Upgradeable public curationPass;
 
-    uint40 internal numAdded;
-
-    uint40 internal numRemoved;
-
-    bool internal isPaused;
-
-    uint256 internal frozenAt;
-
-    uint256 internal curationLimit;
-    
-    /// @dev Listing id => Listing address
-    mapping(uint256 => Listing) internal idToListing;
+    /// Stores virtual mapping array length parameters
+    /// @notice Array total size (total size)
+    uint40 public numAdded;
+    /// @notice Array active size = numAdded - numRemoved
+    /// @dev Blank entries are retained within array
+    uint40 public numRemoved;
+    /// @notice If curation is paused by the owner
+    bool public isPaused;
+    /// @notice timestamp that the curation is frozen at (if never, frozen = 0)
+    uint256 public frozenAt;
+    /// @notice Limit of # of items that can be curated
+    uint256 public curationLimit;
+    /// @notice Address of the NFT Metadata renderer contract
+    IMetadataRenderer public renderer;
+    /// @notice Listing id => Listing struct mapping, listing IDs are 0 => upwards
+    /// @dev Can contain blank entries (not garbage compacted!)
+    mapping(uint256 => Listing) public idToListing;
 }
 
 contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
-
-    uint256 constant TYPE_GENERIC = 0;
-    uint256 constant TYPE_NFT_CONTRACT = 1;
-    uint256 constant TYPE_CURATION_CONTRACT = 2;
-    uint256 constant CURATION_CONTRACT = 3;
-    uint256 constant NFT_ITEM = 4;
-    uint256 constant EOA_WALLET = 5;
+    uint16 public constant CURATION_TYPE_GENERIC = 0;
+    uint16 public constant CURATION_TYPE_NFT_CONTRACT = 1;
+    uint16 public constant CURATION_TYPE_CURATION_CONTRACT = 2;
+    uint16 public constant CURATION_TYPE_CONTRACT = 3;
+    uint16 public constant CURATION_TYPE_NFT_ITEM = 4;
+    uint16 public constant CURATION_TYPE_EOA_WALLET = 5;
 
     ICuratorFactory private immutable curatorFactory;
 
-    modifier onlyActive {
+    /// @notice Modifier that ensures the curator is active and not frozen
+    modifier onlyActive() {
         if (isPaused && msg.sender != owner()) {
             revert CURATION_PAUSED();
         }
 
         if (frozenAt != 0 && frozenAt < block.timestamp) {
             revert CURATION_FROZEN();
+        }
+
+        _;
+    }
+
+    /// @notice Modifier that only allows an admin or curator of a specific entry access
+    modifier onlyCuratorOrAdmin(uint256 listingId) {
+        if (owner() != msg.sender || idToListing[listingId].curator != msg.sender) {
+            revert NOT_ALLOWED();
         }
 
         _;
@@ -125,8 +78,9 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         address _curationPass,
         bool _pause,
         uint256 _curationLimit,
+        address _renderer,
+        bytes memory _rendererInitializer,
         Listing[] memory _initialListings
-
     ) external initializer {
         __Ownable_init(_owner);
 
@@ -135,18 +89,19 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
         curationPass = IERC721Upgradeable(_curationPass);
 
+        _updateRenderer(IMetadataRenderer(_renderer), _rendererInitializer);
+
         if (_pause) {
             _setCurationPaused(_pause);
         }
 
         if (_curationLimit != 0) {
-            updateCurationLimit(_curationLimit);
+            _updateCurationLimit(_curationLimit);
         }
 
         if (_initialListings.length != 0) {
-            addListings(_initialListings);
+            _addListings(_initialListings);
         }
-
     }
 
     function getListings() external view returns (Listing[] memory activeListings) {
@@ -166,49 +121,20 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         }
     }
 
-    function addListings(
-        Listing[] calldata listings
-    ) external onlyActive {
-        if (curationPass.balanceOf(msg.sender) == 0) {
-            if (msg.sender != owner()) {
-                revert PASS_REQUIRED();
-            }
-        }
+    /**
+        Admin functions
+     */
 
-        if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
-            revert HAS_TOO_MANY_ITEMS();
-        }
-
-        for (uint256 i = 0; i < listings.length; ++i) {
-            idToListing[numAdded] = listings[i]; 
-            idToListing[numAdded].curator = msg.sender;
-            ++numAdded;
-        }
-        if (listings.length > type(uint40).max) {
-            revert TOO_MANY_ENTRIES();
-        }
-        numAdded += uint40(listings.length);
+    function updateCurationLimit(uint256 newLimit) external onlyOwner {
+        _updateCurationLimit(newLimit);
     }
 
-    function updateCurationLimit(uint256 newLimit) external {
+    function _updateCurationLimit(uint256 newLimit) internal {
         if (curationLimit < newLimit && curationLimit != 0) {
             revert CANNOT_UPDATE_CURATION_LIMIT_DOWN();
         }
         curationLimit = newLimit;
         emit UpdatedCurationLimit(newLimit);
-    }
-
-    function updateSortOrders(uint256[] calldata tokenIds, int32[] calldata sortOrders) external onlyActive {
-        if (tokenIds.length != sortOrders.length) {
-            revert INVALID_INPUT_LENGTH();
-        }
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (msg.sender != owner() && msg.sender != idToListing[tokenIds[i]].curator) {
-                revert NOT_ALLOWED();
-            }
-            idToListing[tokenIds[i]].sortOrder = sortOrders[i];
-        }
-        emit UpdatedSortOrder(tokenIds, sortOrders, msg.sender);
     }
 
     function freezeAt(uint256 timestamp) external onlyOwner {
@@ -219,74 +145,16 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         emit ScheduledFreeze(frozenAt);
     }
 
-    function burn(uint256 listingId) public onlyActive { 
-        _burnTokenWithChecks(listingId);
+    function updateRenderer(address _newRenderer, bytes memory _rendererInitializer) external onlyOwner {
+        _updateRenderer(IMetadataRenderer(_newRenderer), _rendererInitializer);
     }
 
-    function burnBatch(uint256[] calldata listingIds) external {
-        unchecked {
-            for (uint256 i = 0; i < listingIds.length; ++i) {
-                _burnTokenWithChecks(listingIds[i]);
-            }
+    function _updateRenderer(IMetadataRenderer _newRenderer, bytes memory _rendererInitializer) internal {
+        renderer = _newRenderer;
+        if (_rendererInitializer.length > 0) {
+            renderer.initializeWithData(_rendererInitializer);
         }
-    }
-
-    // nft functions
-
-    function _exists(uint256 id) internal override virtual view returns (bool) {
-        return idToListing[id].curator != address(0);
-    }
-
-    function balanceOf(address _owner) public override view returns (uint256 balance) {
-        for (uint256 i = 0; i < numAdded; ++i) {
-            if (idToListing[i].curator == _owner) {
-                ++balance;
-            }
-        }
-    }
-
-    function name() override external view returns (string memory) {
-        return contractName;
-    }
-
-    function symbol() override external view returns (string memory) {
-        return contractSymbol;
-    }
-
-    function totalSupply() override public view returns (uint256) {
-        return numAdded - numRemoved;
-    }
-
-    function ownerOf(uint256 id) public override virtual view returns (address) {
-        if (!_exists(id)) {
-            revert NO_OWNER();
-        }
-        return idToListing[id].curator;
-    }
-
-    function tokenURI(uint256 token) override external view returns (string memory) {
-        // TODO
-        return '';
-        // return renderer.tokenURI(token);
-    }
-
-    function contractURI() external override view returns (string memory) {
-        // TODO
-        return '';
-        // return renderer.contractURI(token);
-    }
-
-    function _burnTokenWithChecks(uint256 listingId) internal {
-        Listing memory _listing = idToListing[listingId];
-        delete idToListing[listingId];
-        unchecked {
-            ++numRemoved;
-        }
-
-        // burn nft
-        _burn(listingId);
-
-        emit ListingRemoved(msg.sender, _listing);
+        emit SetRenderer(address(renderer));
     }
 
     function updateCurationPass(IERC721Upgradeable _curationPass) public onlyOwner {
@@ -312,6 +180,121 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
         isPaused = _setPaused;
     }
+
+    /** 
+        Curator Functions
+    */
+
+    function addListings(Listing[] memory listings) external onlyActive {
+        if (curationPass.balanceOf(msg.sender) == 0) {
+            if (msg.sender != owner()) {
+                revert PASS_REQUIRED();
+            }
+        }
+
+        _addListings(listings);
+    }
+
+    function _addListings(Listing[] memory listings) internal {
+        if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
+            revert HAS_TOO_MANY_ITEMS();
+        }
+
+        for (uint256 i = 0; i < listings.length; ++i) {
+            if (listings[i].curator != msg.sender) {
+                revert WRONG_CURATOR_FOR_LISTING(listings[i].curator, msg.sender);
+            }
+            idToListing[numAdded] = listings[i];
+            idToListing[numAdded].curator = msg.sender;
+            ++numAdded;
+        }
+    }
+
+    function updateSortOrders(uint256[] calldata tokenIds, int32[] calldata sortOrders) external onlyActive {
+        if (tokenIds.length != sortOrders.length) {
+            revert INVALID_INPUT_LENGTH();
+        }
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            _setSortOrder(tokenIds[i], sortOrders[i]);
+        }
+        emit UpdatedSortOrder(tokenIds, sortOrders, msg.sender);
+    }
+
+    function _setSortOrder(uint256 listingId, int32 sortOrder) internal onlyCuratorOrAdmin(listingId) {
+        idToListing[listingId].sortOrder = sortOrder;
+    }
+
+    /**
+        NFT Functions
+     */
+
+    function burn(uint256 listingId) public onlyActive {
+        _burnTokenWithChecks(listingId);
+    }
+
+    function burnBatch(uint256[] calldata listingIds) external {
+        unchecked {
+            for (uint256 i = 0; i < listingIds.length; ++i) {
+                _burnTokenWithChecks(listingIds[i]);
+            }
+        }
+    }
+
+    function _exists(uint256 id) internal view virtual override returns (bool) {
+        return idToListing[id].curator != address(0);
+    }
+
+    function balanceOf(address _owner) public view override returns (uint256 balance) {
+        for (uint256 i = 0; i < numAdded; ++i) {
+            if (idToListing[i].curator == _owner) {
+                ++balance;
+            }
+        }
+    }
+
+    function name() external view override returns (string memory) {
+        return contractName;
+    }
+
+    function symbol() external view override returns (string memory) {
+        return contractSymbol;
+    }
+
+    function totalSupply() public view override returns (uint256) {
+        return numAdded - numRemoved;
+    }
+
+    function ownerOf(uint256 id) public view virtual override returns (address) {
+        if (!_exists(id)) {
+            revert NO_OWNER();
+        }
+        return idToListing[id].curator;
+    }
+
+    function tokenURI(uint256 tokenId) external view override returns (string memory) {
+        return renderer.tokenURI(tokenId);
+    }
+
+    function contractURI() external view override returns (string memory) {
+        return renderer.contractURI();
+    }
+
+    function _burnTokenWithChecks(uint256 listingId) internal onlyActive onlyCuratorOrAdmin(listingId) {
+        Listing memory _listing = idToListing[listingId];
+        delete idToListing[listingId];
+        unchecked {
+            ++numRemoved;
+        }
+
+        // Process NFT Burn
+        _burn(listingId);
+
+        emit ListingRemoved(msg.sender, _listing);
+    }
+
+    /**
+        Contract admin functions
+     */
 
     function _authorizeUpgrade(address _newImpl) internal view override onlyOwner {
         if (!curatorFactory.isValidUpgrade(_getImplementation(), _newImpl)) {

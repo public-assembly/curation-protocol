@@ -121,7 +121,8 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         string memory _name,
         string memory _symbol,
         address _curationPass,
-        bool _pause
+        bool _pause,
+        uint256 _curationLimit,
     ) external initializer {
         __Ownable_init(_owner);
 
@@ -133,6 +134,11 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         if (_pause) {
             _setCurationPaused(_pause);
         }
+
+        if (_curationLimit != 0) {
+            updateCurationLimit(_curationLimit);
+        }
+
     }
 
     function getListings() external view returns (Listing[] memory activeListings) {

@@ -7,12 +7,6 @@ import { ERC1967Proxy } from "./lib/proxy/ERC1967Proxy.sol";
 
 import { ICurator, Curator } from "./Curator.sol";
 
-interface ICuratorFactory {
-    event CuratorDeployed(address);
-
-    function isValidUpgrade(address baseImpl, address newImpl) external view returns (bool);
-}
-
 contract CuratorFactoryStorageV1 {
     mapping(address => mapping(address => bool)) internal isUpgrade;
 }

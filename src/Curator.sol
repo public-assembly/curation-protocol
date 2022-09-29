@@ -122,7 +122,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         string memory _symbol,
         address _curationPass,
         bool _pause,
-        uint256 _curationLimit,
+        uint256 _curationLimit
     ) external initializer {
         __Ownable_init(_owner);
 

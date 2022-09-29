@@ -5,12 +5,14 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
+import { IERC5192 } from "./IERC5192.sol";
 
 /// @notice Base non-transferrable optimized nft contract for FWB
 abstract contract CuratorSkeletonNFT is
     IERC165Upgradeable,
     IERC721Upgradeable,
-    IERC721MetadataUpgradeable
+    IERC721MetadataUpgradeable,
+    IERC5192
 {
     /// @notice modifier signifying contract function is not supported
     modifier notSupported() {
@@ -27,6 +29,13 @@ abstract contract CuratorSkeletonNFT is
 
     /// @notice NFT Metadata Symbol
     function symbol() virtual external view returns (string memory);
+
+    /*
+     *  EIP-5192 Functions
+     */
+    function locked(uint256 tokenId) external view returns (bool) {
+      return true;
+    }
 
 
     /*
@@ -67,6 +76,7 @@ abstract contract CuratorSkeletonNFT is
             to != address(0x0),
             "Mint: cannot mint to 0x0"
         );
+        emit Locked(id);
         _transferFrom(address(0x0), to, id);
     }
 
@@ -128,7 +138,8 @@ abstract contract CuratorSkeletonNFT is
         return
             interfaceId == type(IERC165Upgradeable).interfaceId ||
             interfaceId == type(IERC721Upgradeable).interfaceId ||
-            interfaceId == type(IERC721MetadataUpgradeable).interfaceId;
+            interfaceId == type(IERC721MetadataUpgradeable).interfaceId ||
+            interfaceId == type(IERC5192).interfaceId;
     }
 
     /// @notice internal exists fn for a given token id

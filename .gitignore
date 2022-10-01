@@ -6,5 +6,4 @@ dist
 .env
 .DS_Store
 .vscode/
-broadcast
 anvil

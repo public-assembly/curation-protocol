@@ -8,34 +8,12 @@ import { Ownable } from "./lib/utils/Ownable.sol";
 import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
+import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
 
-abstract contract CuratorStorageV1 is ICurator {
-    string internal contractName;
-
-    string internal contractSymbol;
-
-    IERC721Upgradeable public curationPass;
-
-    /// Stores virtual mapping array length parameters
-    /// @notice Array total size (total size)
-    uint40 public numAdded;
-    /// @notice Array active size = numAdded - numRemoved
-    /// @dev Blank entries are retained within array
-    uint40 public numRemoved;
-    /// @notice If curation is paused by the owner
-    bool public isPaused;
-    /// @notice timestamp that the curation is frozen at (if never, frozen = 0)
-    uint256 public frozenAt;
-    /// @notice Limit of # of items that can be curated
-    uint256 public curationLimit;
-    /// @notice Address of the NFT Metadata renderer contract
-    IMetadataRenderer public renderer;
-    /// @notice Listing id => Listing struct mapping, listing IDs are 0 => upwards
-    /// @dev Can contain blank entries (not garbage compacted!)
-    mapping(uint256 => Listing) public idToListing;
-}
 
 contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
+    // Public constants for curation types.
+    // Allows for adding new types later easily compared to a enum.
     uint16 public constant CURATION_TYPE_GENERIC = 0;
     uint16 public constant CURATION_TYPE_NFT_CONTRACT = 1;
     uint16 public constant CURATION_TYPE_CURATION_CONTRACT = 2;
@@ -43,6 +21,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     uint16 public constant CURATION_TYPE_NFT_ITEM = 4;
     uint16 public constant CURATION_TYPE_EOA_WALLET = 5;
 
+    /// @notice Reference to factory contract
     ICuratorFactory private immutable curatorFactory;
 
     /// @notice Modifier that ensures the curator is active and not frozen
@@ -151,6 +130,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function _updateRenderer(IMetadataRenderer _newRenderer, bytes memory _rendererInitializer) internal {
         renderer = _newRenderer;
+        // If data provided, call initalize to new renderer replacement.
         if (_rendererInitializer.length > 0) {
             renderer.initializeWithData(_rendererInitializer);
         }
@@ -205,7 +185,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
                 revert WRONG_CURATOR_FOR_LISTING(listings[i].curator, msg.sender);
             }
             idToListing[numAdded] = listings[i];
-            idToListing[numAdded].curator = msg.sender;
+            _mint(listings[i].curator, numAdded);
             ++numAdded;
         }
     }
@@ -281,13 +261,14 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function _burnTokenWithChecks(uint256 listingId) internal onlyActive onlyCuratorOrAdmin(listingId) {
         Listing memory _listing = idToListing[listingId];
+        // Process NFT Burn
+        _burn(listingId);
+
+        // Remove listing
         delete idToListing[listingId];
         unchecked {
             ++numRemoved;
         }
-
-        // Process NFT Burn
-        _burn(listingId);
 
         emit ListingRemoved(msg.sender, _listing);
     }

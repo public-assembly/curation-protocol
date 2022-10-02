@@ -35,7 +35,7 @@ contract CurationTestSetup is Test {
         mockPassHolder = vm.addr(0xCAB);
 
         mockTokenPass = new MockERC721();
-        mockTokenPass.mint(mockPassHolder, 1);
+        mockTokenPass.mint(mockPassHolder);
 
         deployCore(zora);
     }
@@ -84,6 +84,6 @@ contract CurationTestSetup is Test {
         }
 
         vm.prank(mockCurationManager);
-        curator.addListings(listingsToAdd);
+        curator.addListings(mockListings);
     }
 }

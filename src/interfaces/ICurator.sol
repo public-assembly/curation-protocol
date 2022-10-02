@@ -21,7 +21,7 @@ interface ICurator {
 
     event SetRenderer(address);
 
-    event CurationPaused(address indexed owner);
+    event CurationPauseUpdated(address indexed owner, bool isPaused);
 
     event CurationResumed(address indexed owner);
 

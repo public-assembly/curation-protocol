@@ -10,7 +10,6 @@ import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
 
-import {console2} from "forge-std/console2.sol";
 
 contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     // Public constants for curation types.

@@ -86,7 +86,13 @@ contract CuratorTest is CurationTestSetup {
         addBatchListings(5);
 
         vm.startPrank(mockCurationManager);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(mockCurationManager, address(0x0), 2);
         curator.burn(2);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(mockCurationManager, address(0x0), 4);
         curator.burn(4);
         vm.stopPrank();
 

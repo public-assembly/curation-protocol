@@ -39,7 +39,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     /// @notice Modifier that only allows an admin or curator of a specific entry access
     modifier onlyCuratorOrAdmin(uint256 listingId) {
         if (owner() != msg.sender || idToListing[listingId].curator != msg.sender) {
-            revert NOT_ALLOWED();
+            revert ACCESS_NOT_ALLOWED();
         }
 
         _;
@@ -172,7 +172,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function _addListings(Listing[] memory listings) internal {
         if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
-            revert HAS_TOO_MANY_ITEMS();
+            revert TOO_MANY_ENTRIES();
         }
 
         for (uint256 i = 0; i < listings.length; ++i) {
@@ -241,7 +241,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function ownerOf(uint256 id) public view virtual override returns (address) {
         if (!_exists(id)) {
-            revert NO_OWNER();
+            revert TOKEN_HAS_NO_OWNER();
         }
         return idToListing[id].curator;
     }

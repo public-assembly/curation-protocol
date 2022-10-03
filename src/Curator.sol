@@ -143,22 +143,10 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         emit TokenPassUpdated(msg.sender, address(_curationPass));
     }
 
-    function pauseCuration() public onlyOwner {
-        _setCurationPaused(true);
-    }
-
-    function resumeCuration() public onlyOwner {
-        _setCurationPaused(false);
-    }
-
-    function _setCurationPaused(bool _setPaused) internal {
-        if (_setPaused) {
-            emit CurationPaused(msg.sender);
-        } else {
-            emit CurationResumed(msg.sender);
-        }
-
+    function setCurationPaused(bool _setPaused) public onlyOwner {
         isPaused = _setPaused;
+
+        emit CurationPauseUpdated(msg.sender, isPaused);
     }
 
     /** 

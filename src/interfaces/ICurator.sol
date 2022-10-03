@@ -16,6 +16,8 @@ interface ICurator {
         int32 sortOrder;
         /// @notice If the token ID applies to the curation (can be whole contract or a specific tokenID)
         bool hasTokenId;
+        /// @notice ChainID for curated contract
+        uint16 chainId;
     }
 
     /// @notice Emitted when a listing is added

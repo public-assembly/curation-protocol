@@ -10,7 +10,6 @@ import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
 
-
 contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     // Public constants for curation types.
     // Allows for adding new types later easily compared to a enum.
@@ -40,7 +39,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     /// @notice Modifier that only allows an admin or curator of a specific entry access
     modifier onlyCuratorOrAdmin(uint256 listingId) {
         if (owner() != msg.sender || idToListing[listingId].curator != msg.sender) {
-            revert NOT_ALLOWED();
+            revert ACCESS_NOT_ALLOWED();
         }
 
         _;
@@ -144,6 +143,14 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     }
 
     function setCurationPaused(bool _setPaused) public onlyOwner {
+        if (isPaused == _setPaused) {
+            revert CANNOT_SET_SAME_PAUSED_STATE();
+        }
+
+        _setCurationPaused(_setPaused);
+    }
+
+    function _setCurationPaused(bool _setPaused) internal {
         isPaused = _setPaused;
 
         emit CurationPauseUpdated(msg.sender, isPaused);
@@ -165,7 +172,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function _addListings(Listing[] memory listings) internal {
         if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
-            revert HAS_TOO_MANY_ITEMS();
+            revert TOO_MANY_ENTRIES();
         }
 
         for (uint256 i = 0; i < listings.length; ++i) {
@@ -200,7 +207,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         _burnTokenWithChecks(listingId);
     }
 
-    function burnBatch(uint256[] calldata listingIds) external {
+    function burnBatch(uint256[] calldata listingIds) external onlyActive {
         unchecked {
             for (uint256 i = 0; i < listingIds.length; ++i) {
                 _burnTokenWithChecks(listingIds[i]);
@@ -234,7 +241,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
 
     function ownerOf(uint256 id) public view virtual override returns (address) {
         if (!_exists(id)) {
-            revert NO_OWNER();
+            revert TOKEN_HAS_NO_OWNER();
         }
         return idToListing[id].curator;
     }

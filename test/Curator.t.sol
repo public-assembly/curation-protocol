@@ -28,7 +28,7 @@ contract CuratorTest is CurationTestSetup {
         vm.startPrank(mockPassHolder);
         ICurator.Listing[] memory listings = new ICurator.Listing[](1);
         listings[0].curator = mockPassHolder;
-        listings[0].curatedContract = address(0x123);
+        listings[0].curatedAddress = address(0x123);
         listings[0].curationTargetType = curator.CURATION_TYPE_GENERIC();
         curator.addListings(listings);
     }
@@ -37,7 +37,7 @@ contract CuratorTest is CurationTestSetup {
         deployMockCurator();
 
         ICurator.Listing[] memory listings = new ICurator.Listing[](1);
-        listings[0].curatedContract = address(0x123);
+        listings[0].curatedAddress = address(0x123);
         listings[0].curationTargetType = curator.CURATION_TYPE_GENERIC();
 
         vm.expectRevert(abi.encodeWithSignature("PASS_REQUIRED()"));
@@ -48,7 +48,7 @@ contract CuratorTest is CurationTestSetup {
         deployMockCurator();
 
         ICurator.Listing[] memory listings = new ICurator.Listing[](1);
-        listings[0].curatedContract = address(0x123);
+        listings[0].curatedAddress = address(0x123);
         listings[0].curationTargetType = curator.CURATION_TYPE_GENERIC();
         listings[0].curator = mockCurationManager;
 
@@ -61,7 +61,7 @@ contract CuratorTest is CurationTestSetup {
 
         ICurator.Listing[] memory listingsToAdd = new ICurator.Listing[](1);
         listingsToAdd[0].curator = mockCurationManager;
-        listingsToAdd[0].curatedContract = address(0x123);
+        listingsToAdd[0].curatedAddress = address(0x123);
         listingsToAdd[0].hasTokenId = false;
         listingsToAdd[0].curationTargetType = curator.CURATION_TYPE_EOA_WALLET();
 

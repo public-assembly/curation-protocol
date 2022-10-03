@@ -77,7 +77,7 @@ contract CurationTestSetup is Test {
             for (uint256 i; i < _numListings; ++i) {
                 mockListings.push();
                 mockListings[i].curator = minter;
-                mockListings[i].curatedContract = address(0x123);
+                mockListings[i].curatedAddress = address(0x123);
                 mockListings[i].hasTokenId = false;
                 mockListings[i].curationTargetType = curator.CURATION_TYPE_EOA_WALLET();
             }

@@ -75,7 +75,7 @@ contract CuratorTest is CurationTestSetup {
     function test_AddListings() public {
         deployMockCurator();
 
-        addBatchListings(5);
+        addBatchListings(5, mockCurationManager);
 
         curator.getListings();
     }
@@ -83,7 +83,7 @@ contract CuratorTest is CurationTestSetup {
     function test_RemoveListings() public {
         deployMockCurator();
 
-        addBatchListings(5);
+        addBatchListings(5, mockCurationManager);
 
         vm.startPrank(mockCurationManager);
 
@@ -102,10 +102,12 @@ contract CuratorTest is CurationTestSetup {
     function test_RemoveListingFailIfPaused() public {
         deployMockCurator();
 
-        addBatchListings(5);
+        address randomLister = address(0x312412);
+        addBatchListings(5, randomLister);
 
-        vm.startPrank(mockCurationManager);
+        vm.prank(mockCurationManager);
         curator.setCurationPaused(true);
+        vm.startPrank(randomLister);
         vm.expectRevert(ICurator.CURATION_PAUSED.selector);
         curator.burn(2);
     }
@@ -113,14 +115,31 @@ contract CuratorTest is CurationTestSetup {
     function test_RemoveListingsFailIfPaused() public {
         deployMockCurator();
 
-        addBatchListings(5);
+        address randomLister = address(0x312412);
+        addBatchListings(5, randomLister);
 
-        vm.startPrank(mockCurationManager);
+        vm.prank(mockCurationManager);
         curator.setCurationPaused(true);
+        vm.startPrank(randomLister);
         uint256[] memory burnBatchIds = new uint256[](2);
         burnBatchIds[0] = 1;
         burnBatchIds[0] = 2;
         vm.expectRevert(ICurator.CURATION_PAUSED.selector);
+        curator.burnBatch(burnBatchIds);
+    }
+
+    function test_RemoveListingsFailIfFrozen() public {
+        deployMockCurator();
+
+        addBatchListings(5, mockCurationManager);
+
+        vm.startPrank(mockCurationManager);
+        curator.freezeAt(1);
+        vm.warp(10);
+        uint256[] memory burnBatchIds = new uint256[](2);
+        burnBatchIds[0] = 1;
+        burnBatchIds[0] = 2;
+        vm.expectRevert(ICurator.CURATION_FROZEN.selector);
         curator.burnBatch(burnBatchIds);
     }
 }

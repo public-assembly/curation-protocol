@@ -10,7 +10,6 @@ import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
 
-
 contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     // Public constants for curation types.
     // Allows for adding new types later easily compared to a enum.
@@ -144,6 +143,14 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     }
 
     function setCurationPaused(bool _setPaused) public onlyOwner {
+        if (isPaused == _setPaused) {
+            revert CANNOT_SET_SAME_PAUSED_STATE();
+        }
+
+        _setCurationPaused(_setPaused);
+    }
+
+    function _setCurationPaused(bool _setPaused) internal {
         isPaused = _setPaused;
 
         emit CurationPauseUpdated(msg.sender, isPaused);
@@ -200,7 +207,7 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         _burnTokenWithChecks(listingId);
     }
 
-    function burnBatch(uint256[] calldata listingIds) external {
+    function burnBatch(uint256[] calldata listingIds) external onlyActive {
         unchecked {
             for (uint256 i = 0; i < listingIds.length; ++i) {
                 _burnTokenWithChecks(listingIds[i]);

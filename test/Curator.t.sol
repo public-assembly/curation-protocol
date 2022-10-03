@@ -98,4 +98,29 @@ contract CuratorTest is CurationTestSetup {
 
         curator.getListings();
     }
+
+    function test_RemoveListingFailIfPaused() public {
+        deployMockCurator();
+
+        addBatchListings(5);
+
+        vm.startPrank(mockCurationManager);
+        curator.setCurationPaused(true);
+        vm.expectRevert(ICurator.CURATION_PAUSED.selector);
+        curator.burn(2);
+    }
+
+    function test_RemoveListingsFailIfPaused() public {
+        deployMockCurator();
+
+        addBatchListings(5);
+
+        vm.startPrank(mockCurationManager);
+        curator.setCurationPaused(true);
+        uint256[] memory burnBatchIds = new uint256[](2);
+        burnBatchIds[0] = 1;
+        burnBatchIds[0] = 2;
+        vm.expectRevert(ICurator.CURATION_PAUSED.selector);
+        curator.burnBatch(burnBatchIds);
+    }
 }

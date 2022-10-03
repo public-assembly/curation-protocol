@@ -41,6 +41,8 @@ interface ICurator {
 
     error CURATION_PAUSED();
 
+    error CANNOT_SET_SAME_PAUSED_STATE();
+
     error CURATION_FROZEN();
 
     error LISTING_EXISTS();

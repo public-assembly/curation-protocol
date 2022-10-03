@@ -179,6 +179,9 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
             if (listings[i].curator != msg.sender) {
                 revert WRONG_CURATOR_FOR_LISTING(listings[i].curator, msg.sender);
             }
+            if (listings[i].chainId == 0) {
+                listings[i].chainId = uint16(block.chainid);
+            }
             idToListing[numAdded] = listings[i];
             _mint(listings[i].curator, numAdded);
             ++numAdded;

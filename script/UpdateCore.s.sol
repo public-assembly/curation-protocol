@@ -6,7 +6,6 @@ import "forge-std/Script.sol";
 import { CuratorFactory } from "../src/CuratorFactory.sol";
 import { Curator } from "../src/Curator.sol";
 import { ERC1967Proxy } from "../src/lib/proxy/ERC1967Proxy.sol";
-import { DefaultMetadataRenderer } from "../src/DefaultMetadataRenderer.sol";
 
 contract DeployCore is Script {
     address internal owner;

@@ -16,11 +16,10 @@ abstract contract CuratorFactoryStorageV1 {
 
 contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorageV1 {
     address public immutable curatorImpl;
-    bytes32 internal immutable curatorHash;
+    bytes32 public immutable curatorHash;
 
-    constructor(address _curatorImpl, address _defaultMetadataRenderer) payable initializer {
+    constructor(address _curatorImpl) payable initializer {
         curatorImpl = _curatorImpl;
-        defaultMetadataRenderer = _defaultMetadataRenderer;
         curatorHash = keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(_curatorImpl, "")));
     }
 
@@ -30,8 +29,9 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         emit HasNewMetadataRenderer(_renderer);
     }
 
-    function initialize(address _owner) external initializer {
+    function initialize(address _owner, address _defaultMetadataRenderer) external initializer {
         __Ownable_init(_owner);
+        defaultMetadataRenderer = _defaultMetadataRenderer;
     }
 
     function deploy(
@@ -45,9 +45,10 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         bytes memory rendererInitializer,
         ICurator.Listing[] memory listings
     ) external returns (address curator) {
-        if (renderer == address(0x0)) {
+        if (renderer == address(0)) {
             renderer = defaultMetadataRenderer;
         }
+
         curator = address(
             new ERC1967Proxy(
                 curatorImpl,

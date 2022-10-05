@@ -33,7 +33,7 @@ abstract contract CuratorSkeletonNFT is
     /*
      *  EIP-5192 Functions
      */
-    function locked(uint256 tokenId) external pure returns (bool) {
+    function locked(uint256) external pure returns (bool) {
       return true;
     }
 

@@ -6,18 +6,22 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 library CurationMetadataBuilder {
-    bytes32 constant key_name = "name";
-    bytes32 constant key_description = "description";
-    bytes32 constant key_image = "image";
+    string constant key_name = "name";
+    string constant key_description = "description";
+    string constant key_image = "image";
 
     function encodeURI(string memory uriType, string memory result) internal pure returns (string memory) {
         return string.concat("data:", uriType, ";base64,", string(Base64.encode(bytes(result))));
     }
 
-    function generateJSON(bytes32[] memory keys, string[] memory values) internal pure returns (string memory) {
-        string memory result;
+    function generateJSON(string[] memory keys, string[] memory values) internal pure returns (string memory) {
+        string memory result = "{";
+        string memory postfix = ",";
         for (uint256 i = 0; i < keys.length; i++) {
-            result = string(abi.encodePacked(result, '"', keys[i], '": "', values[i], '"'));
+            if (i == keys.length - 1) {
+                postfix = '}';
+            }
+            result = string(abi.encodePacked(result, '"', keys[i], '": "', values[i], '"', postfix));
         }
         return encodeURI("application/json", result);
     }
@@ -26,11 +30,10 @@ library CurationMetadataBuilder {
         uint256 x,
         uint256 xMax,
         uint256 xMin,
-        uint256 y,
         uint256 yMin,
         uint256 yMax
     ) internal pure returns (uint256) {
-        return ((x - xMin) * (yMax - yMin)) / (xMax - xMin) + xMin;
+        return ((x - xMin) * (yMax - yMin)) / (xMax - xMin) + yMin;
     }
 
     function _makeSquare(

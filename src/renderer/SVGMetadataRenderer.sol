@@ -4,9 +4,8 @@ pragma solidity 0.8.15;
 import { IMetadataRenderer } from "../interfaces/IMetadataRenderer.sol";
 import { ICuratorInfo, IERC721Metadata } from "../interfaces/ICuratorInfo.sol";
 import { ICurator } from "../interfaces/ICurator.sol";
-import { CurationMetadataBuilder } from './CurationMetadataBuilder.sol';
+import { CurationMetadataBuilder } from "./CurationMetadataBuilder.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-
 
 contract SVGMetadataRenderer is IMetadataRenderer {
     function initializeWithData(bytes memory initData) public {}
@@ -75,7 +74,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
 
     function contractURI() external view override returns (string memory) {
         ICuratorInfo curation = ICuratorInfo(msg.sender);
-        bytes32[] memory keys = new bytes32[](3);
+        string[] memory keys = new string[](3);
         string[] memory values = new string[](3);
 
         string memory curationName = "Untitled NFT";
@@ -90,8 +89,14 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         values[1] = string.concat(
             "This is a curation NFT owned by ",
             Strings.toHexString(curation.owner()),
-            "\n\nThe NFTs in this collection mark curators curating this collection. The curation pass for this NFT is ",
-            "\n\nThese NFTs only mark curations and are non-transferrable.\n\n View or manage this curation at: \n\n A project of public assembly."
+            "\\n\\nThe NFTs in this collection mark curators curating this collection."
+            "The curation pass for this NFT is ",
+            curationName,
+            "\\n\\nThese NFTs only mark curations and are non-transferrable."
+            "\\n\\nView or manage this curation at: "
+            "https://public---assembly.com/",
+            Strings.toHexString(msg.sender),
+            "\\n\\nA project of public assembly."
         );
         keys[2] = CurationMetadataBuilder.key_image;
         values[2] = generateGridForAddress(msg.sender, RenderingType.CURATION, address(0x0));
@@ -101,12 +106,20 @@ contract SVGMetadataRenderer is IMetadataRenderer {
 
     function tokenURI(uint256 tokenId) external view override returns (string memory) {
         ICurator curator = ICurator(msg.sender);
-        bytes32[] memory keys = new bytes32[](3);
+        string[] memory keys = new string[](3);
         string[] memory values = new string[](3);
 
         ICurator.Listing memory listing = curator.getListing(tokenId);
 
         string memory curationName = "Untitled NFT";
+        RenderingType renderingType = RenderingType.CONTRACT;
+        if (listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
+            renderingType = RenderingType.NFT;
+        }
+        if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT()) {
+            renderingType = RenderingType.CONTRACT;
+        }
+
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT() || listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
             if (listing.curatedAddress.code.length > 0) {
                 try ICuratorInfo(listing.curatedAddress).name() returns (string memory result) {
@@ -116,17 +129,18 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         }
 
         keys[0] = CurationMetadataBuilder.key_name;
-        values[0] = string.concat("Curation ", curationName);
+        values[0] = string.concat("Curation #", Strings.toString(tokenId), ": ", curationName);
         keys[1] = CurationMetadataBuilder.key_description;
         values[1] = string.concat(
             "This is an item curated by ",
             Strings.toHexString(listing.curator),
-            "\n\nTo remove this curation, burn the NFT. "
-            "\n\nThis NFT is non-transferrable. "
-            "\n\nA project of public assembly. "
+            "\\n\\nTo remove this curation, burn the NFT. "
+            "\\n\\nThis NFT is non-transferrable. "
+            "\\n\\nA project of public assembly. "
         );
         keys[2] = CurationMetadataBuilder.key_image;
-        values[2] = generateGridForAddress(msg.sender, RenderingType.CURATION, address(0x0));
+        // console2.log(uint16(renderingType));
+        values[2] = generateGridForAddress(msg.sender, renderingType, listing.curatedAddress);
 
         return CurationMetadataBuilder.generateJSON(keys, values);
     }

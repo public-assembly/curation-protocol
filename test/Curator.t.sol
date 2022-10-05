@@ -22,6 +22,11 @@ contract CuratorTest is CurationTestSetup {
         assertEq(curator.name(), "Mock Curation Contract");
     }
 
+    function test_InitalListings() public {
+        deployMockCurator();
+
+    }
+
     function test_AddListing() public {
         deployMockCurator();
 

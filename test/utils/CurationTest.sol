@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import "forge-std/Test.sol";
 
 import { CuratorFactory } from "../../src/CuratorFactory.sol";
-import { DefaultMetadataRenderer } from "../../src/DefaultMetadataRenderer.sol";
+import { SVGMetadataRenderer } from "../../src/renderer/SVGMetadataRenderer.sol";
 import { Curator } from "../../src/Curator.sol";
 import { ICurator } from "../../src/interfaces/ICurator.sol";
 
@@ -41,12 +41,14 @@ contract CurationTestSetup is Test {
     }
 
     function deployCore(address _owner) internal {
-        metadataRenderer = address(new DefaultMetadataRenderer("https://default-metadata-renderer.com/"));
-        factoryImpl0 = address(new CuratorFactory(address(0), metadataRenderer));
-        factory = CuratorFactory(address(new ERC1967Proxy(factoryImpl0, abi.encodeWithSelector(CuratorFactory.initialize.selector, _owner))));
+        metadataRenderer = address(new SVGMetadataRenderer());
+        factoryImpl0 = address(new CuratorFactory(address(0)));
+        factory = CuratorFactory(
+            address(new ERC1967Proxy(factoryImpl0, abi.encodeWithSelector(CuratorFactory.initialize.selector, _owner, metadataRenderer)))
+        );
 
         curatorImpl = address(new Curator(address(factory)));
-        factoryImpl = address(new CuratorFactory(curatorImpl, metadataRenderer));
+        factoryImpl = address(new CuratorFactory(curatorImpl));
 
         vm.prank(_owner);
         factory.upgradeTo(factoryImpl);

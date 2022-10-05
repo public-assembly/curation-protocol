@@ -27,6 +27,25 @@ contract CuratorTest is CurationTestSetup {
 
     }
 
+    function test_AddCuratorList() public {
+        ICurator.Listing[] memory listings = new ICurator.Listing[](1);
+        listings[0].curator = mockCurationManager;
+
+        ICurator _curator = ICurator(factory.deploy(
+            mockCurationManager,
+            "Mock Curation Contract",
+            "MKCURATION",
+            address(mockTokenPass),
+            false,
+            0,
+            address(0x0),
+            "",
+            listings
+        ));
+        
+        assertEq(_curator.totalSupply(), 1);
+    }
+
     function test_AddListing() public {
         deployMockCurator();
 

@@ -4,5 +4,6 @@ fuzz_runs = 500
 libs = ['lib']
 optimizer = true
 optimizer_runs = 500000
-out = 'out'
+out = 'dist'
 src = 'src'
+extra_output = []

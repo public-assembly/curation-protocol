@@ -8,21 +8,26 @@ import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { ICurator } from "./interfaces/ICurator.sol";
 import { Curator } from "./Curator.sol";
 
-contract CuratorFactoryStorageV1 {
+abstract contract CuratorFactoryStorageV1 {
+    address public defaultMetadataRenderer;
+
     mapping(address => mapping(address => bool)) internal isUpgrade;
 }
 
 contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorageV1 {
     address public immutable curatorImpl;
-    address public immutable defaultMetadataRenderer;
-
-    bytes32 private immutable curatorHash;
+    bytes32 internal immutable curatorHash;
 
     constructor(address _curatorImpl, address _defaultMetadataRenderer) payable initializer {
         curatorImpl = _curatorImpl;
         defaultMetadataRenderer = _defaultMetadataRenderer;
-
         curatorHash = keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(_curatorImpl, "")));
+    }
+
+    function setDefaultMetadataRenderer(address _renderer) external {
+        defaultMetadataRenderer = _renderer;
+
+        emit HasNewMetadataRenderer(_renderer);
     }
 
     function initialize(address _owner) external initializer {

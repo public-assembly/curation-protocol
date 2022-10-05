@@ -10,7 +10,7 @@ import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
 
-contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
+contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     // Public constants for curation types.
     // Allows for adding new types later easily compared to a enum.
     uint16 public constant CURATION_TYPE_GENERIC = 0;
@@ -18,7 +18,8 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
     uint16 public constant CURATION_TYPE_CURATION_CONTRACT = 2;
     uint16 public constant CURATION_TYPE_CONTRACT = 3;
     uint16 public constant CURATION_TYPE_NFT_ITEM = 4;
-    uint16 public constant CURATION_TYPE_EOA_WALLET = 5;
+    uint16 public constant CURATION_TYPE_WALLET = 5;
+    uint16 public constant CURATION_TYPE_ZORA_EDITION = 6;
 
     /// @notice Reference to factory contract
     ICuratorFactory private immutable curatorFactory;
@@ -82,7 +83,12 @@ contract Curator is UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNFT {
         }
     }
 
-    function getListings() external view returns (Listing[] memory activeListings) {
+    function getListing(uint256 index) external view override returns (Listing memory) {
+        ownerOf(index);
+        return idToListing[index];
+    }
+
+    function getListings() external override view returns (Listing[] memory activeListings) {
         unchecked {
             activeListings = new Listing[](numAdded - numRemoved);
 

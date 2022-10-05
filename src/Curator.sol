@@ -79,7 +79,7 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNF
         }
 
         if (_initialListings.length != 0) {
-            _addListings(_initialListings);
+            _addListings(_initialListings, _owner);
         }
     }
 
@@ -88,7 +88,7 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNF
         return idToListing[index];
     }
 
-    function getListings() external override view returns (Listing[] memory activeListings) {
+    function getListings() external view override returns (Listing[] memory activeListings) {
         unchecked {
             activeListings = new Listing[](numAdded - numRemoved);
 
@@ -173,16 +173,16 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNF
             }
         }
 
-        _addListings(listings);
+        _addListings(listings, msg.sender);
     }
 
-    function _addListings(Listing[] memory listings) internal {
+    function _addListings(Listing[] memory listings, address sender) internal {
         if (curationLimit != 0 && numAdded - numRemoved + listings.length > curationLimit) {
             revert TOO_MANY_ENTRIES();
         }
 
         for (uint256 i = 0; i < listings.length; ++i) {
-            if (listings[i].curator != msg.sender) {
+            if (listings[i].curator != sender) {
                 revert WRONG_CURATOR_FOR_LISTING(listings[i].curator, msg.sender);
             }
             if (listings[i].chainId == 0) {
@@ -244,7 +244,7 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNF
         return contractSymbol;
     }
 
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public view override(CuratorSkeletonNFT, ICurator) returns (uint256) {
         return numAdded - numRemoved;
     }
 

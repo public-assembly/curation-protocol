@@ -31,6 +31,8 @@ interface ICurator {
 
     function getListings() external view returns (Listing[] memory activeListings);
 
+    function totalSupply() external view returns (uint256);
+
     /// @notice Emitted when a listing is added
     event ListingAdded(address indexed curator, Listing listing);
 

@@ -6,15 +6,19 @@ import "forge-std/Script.sol";
 import { CuratorFactory } from "../src/CuratorFactory.sol";
 import { Curator } from "../src/Curator.sol";
 import { ERC1967Proxy } from "../src/lib/proxy/ERC1967Proxy.sol";
+import { SVGMetadataRenderer } from "../src/renderer/SVGMetadataRenderer.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract DeployCore is Script {
     address internal owner;
     address internal factoryProxy;
-    bool internal makeNewMetadata;
+    address internal existingMetadata;
 
     function setUp() public {
         factoryProxy = vm.envAddress("FACTORY_PROXY");
-        makeNewMetadata = vm.envBool("USE_NEW_METADATA");
+        // owner = vm.envAddress("OWNER");
+        existingMetadata = vm.envAddress("EXISTING_METADATA");
     }
 
     function run() public {
@@ -26,10 +30,18 @@ contract DeployCore is Script {
     }
 
     function deployCore() internal {
-        // if (makeNewMetadata) {
-        //     defaultMetadataRenderer = address(new DefaultMetadataRenderer("https://renderer.zora.co/curation/"));
-        // }
-        // curatorImpl = address(new Curator(factoryProxy));
-        // factory.upgradeTo(factoryImpl);
+        if (existingMetadata == address(0x0)) {
+            existingMetadata = address(new SVGMetadataRenderer());
+        }
+        CuratorFactory factory = CuratorFactory(factoryProxy);
+        address lastCuratorImpl = address(factory.curatorImpl());
+        address curatorImpl = address(new Curator(factoryProxy));
+        address factoryImpl = address(new CuratorFactory(curatorImpl));
+        factory.upgradeTo(factoryImpl);
+        // factory.addValidUpgradePath(lastCuratorImpl, curatorImpl);
+        console2.log("New curator impl: ");
+        console2.log(curatorImpl);
+        console2.log("New factory impl: ");
+        console2.log(factoryImpl);
     }
 }

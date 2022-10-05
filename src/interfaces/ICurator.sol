@@ -2,6 +2,13 @@
 pragma solidity 0.8.15;
 
 interface ICurator {
+    function CURATION_TYPE_GENERIC() external view returns (uint16);
+    function CURATION_TYPE_NFT_CONTRACT() external view returns (uint16);
+    function CURATION_TYPE_CONTRACT() external view returns (uint16);
+    function CURATION_TYPE_NFT_ITEM() external view returns (uint16);
+    function CURATION_TYPE_WALLET() external view returns (uint16);
+    function CURATION_TYPE_ZORA_EDITION() external view returns (uint16);
+
     /// @notice Shared listing struct for both access and storage.
     struct Listing {
         /// @notice Address that is curated
@@ -19,6 +26,10 @@ interface ICurator {
         /// @notice ChainID for curated contract
         uint16 chainId;
     }
+
+    function getListing(uint256 listingIndex) external view returns (Listing memory);
+
+    function getListings() external view returns (Listing[] memory activeListings);
 
     /// @notice Emitted when a listing is added
     event ListingAdded(address indexed curator, Listing listing);

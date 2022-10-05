@@ -8,25 +8,30 @@ import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { ICurator } from "./interfaces/ICurator.sol";
 import { Curator } from "./Curator.sol";
 
-contract CuratorFactoryStorageV1 {
+abstract contract CuratorFactoryStorageV1 {
+    address public defaultMetadataRenderer;
+
     mapping(address => mapping(address => bool)) internal isUpgrade;
 }
 
 contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorageV1 {
     address public immutable curatorImpl;
-    address public immutable defaultMetadataRenderer;
+    bytes32 public immutable curatorHash;
 
-    bytes32 private immutable curatorHash;
-
-    constructor(address _curatorImpl, address _defaultMetadataRenderer) payable initializer {
+    constructor(address _curatorImpl) payable initializer {
         curatorImpl = _curatorImpl;
-        defaultMetadataRenderer = _defaultMetadataRenderer;
-
         curatorHash = keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(_curatorImpl, "")));
     }
 
-    function initialize(address _owner) external initializer {
+    function setDefaultMetadataRenderer(address _renderer) external {
+        defaultMetadataRenderer = _renderer;
+
+        emit HasNewMetadataRenderer(_renderer);
+    }
+
+    function initialize(address _owner, address _defaultMetadataRenderer) external initializer {
         __Ownable_init(_owner);
+        defaultMetadataRenderer = _defaultMetadataRenderer;
     }
 
     function deploy(
@@ -40,9 +45,10 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         bytes memory rendererInitializer,
         ICurator.Listing[] memory listings
     ) external returns (address curator) {
-        if (renderer == address(0x0)) {
+        if (renderer == address(0)) {
             renderer = defaultMetadataRenderer;
         }
+
         curator = address(
             new ERC1967Proxy(
                 curatorImpl,

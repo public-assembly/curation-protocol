@@ -22,6 +22,11 @@ contract CuratorTest is CurationTestSetup {
         assertEq(curator.name(), "Mock Curation Contract");
     }
 
+    function test_InitalListings() public {
+        deployMockCurator();
+
+    }
+
     function test_AddListing() public {
         deployMockCurator();
 
@@ -63,7 +68,7 @@ contract CuratorTest is CurationTestSetup {
         listingsToAdd[0].curator = mockCurationManager;
         listingsToAdd[0].curatedAddress = address(0x123);
         listingsToAdd[0].hasTokenId = false;
-        listingsToAdd[0].curationTargetType = curator.CURATION_TYPE_EOA_WALLET();
+        listingsToAdd[0].curationTargetType = curator.CURATION_TYPE_WALLET();
 
         mockTokenPass.mint(mockCurationManager);
         vm.expectEmit(true, true, true, true);

@@ -29,9 +29,9 @@
     "*.sol": "solhint"
   },
   "scripts": {
-    "build": "forge build && rm -rf ./dist/artifacts/*/*.metadata.json",
+    "build": "forge build",
     "clean": "forge clean && rm -rf ./dist",
-    "prepublishOnly": "rm -rf ./dist && forge clean && mkdir -p ./dist/artifacts && yarn build && cp -R src dist && cp -R addresses dist",
+    "prepublishOnly": "rm -rf ./dist && forge clean && mkdir -p ./dist/artifacts && yarn build && cp -R src dist && cp -R addresses dist && mkdir -p ./dist/artifacts && cp -R ./out ./dist/artifacts",
     "test": "forge test"
   }
 }

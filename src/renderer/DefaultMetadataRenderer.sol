@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
-import { LibUintToString } from "sol2string/LibUintToString.sol";
-import { IOwnable } from "./lib/interfaces/IOwnable.sol";
-import { Strings } from "./lib/utils/Strings.sol";
+import { IMetadataRenderer } from "../interfaces/IMetadataRenderer.sol";
+import { IOwnable } from "../lib/interfaces/IOwnable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract DefaultMetadataRenderer is IMetadataRenderer {
     string defaultBaseURI;
@@ -39,7 +38,7 @@ contract DefaultMetadataRenderer is IMetadataRenderer {
     }
 
     function tokenURI(uint256 tokenId) external view override returns (string memory) {
-        return string(abi.encodePacked(_getBaseURI(), Strings.toHexString(msg.sender), "/", LibUintToString.toString(tokenId), ".json"));
+        return string(abi.encodePacked(_getBaseURI(), Strings.toHexString(msg.sender), "/", Strings.toString(tokenId), ".json"));
     }
 
     function _getBaseURI() internal view returns (string memory) {

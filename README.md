@@ -1,10 +1,10 @@
 # Public Curation Protocol
 
 ### High-level overview
-1. CurationFactory.sol allows for easy creation of individual curation contracts
-2. Individual curation contracts are ERC721 collections themselves, with curators recieving a non-transferable "curationReciept" token that contains the information of the listing they have curated. Curators can "remove" listing by burning their curationReciepts
-3. Active listings on a given curation contract can be retreived by the "getListings()" view call on a given Curator.sol proxy, or be using NFT indexers to gather data on all curationReciepts that have been minted from a given curation contract
-4. Listings contain the data specified in the "Listing" struct found in [https://github.com/public-assembly/curation-protocol/blob/main/src/interfaces/ICurator.sol](ICurator.sol)
+1. Factory allows for easy creation of individual curation contracts
+2. Individual curation contracts are ERC721 collections themselves, with curators recieving a non-transferable "listingToken" that contains the information of the listing they have curated. Curators can "remove" listing by burning their curationReciepts
+3. Active listings on a given curation contract can be retreived by the "getListings()" view call on a given Curator.sol proxy, or by using NFT indexers to gather data on all curationReciepts that have been minted from a given curation contract
+4. Listings contain the data specified in the "Listing" struct found in [ICurator.sol](https://github.com/public-assembly/curation-protocol/blob/main/src/interfaces/ICurator.sol)
 
 ### Features these contracts support:
 
@@ -17,9 +17,9 @@
 - Wallet addresses (EOA or smart contract)
 - ZORA Edition collections
 3. Restricted curation access gated by a set ERC721 collection (ex: user balance > 0 of ERC721 provides access to curation functionality)
-4. Curation "listings" represented as individual non-transferable tokens minted to the curator wallet. Allows for easy tracking via NFT indexers (like the [https://api.zora.co/](ZORA API)
-5. Ability for curators to remove their "listings" by burning their non-transferable curation tokens
-6. 
+4. Curation listings represented as individual non-transferable "listingTokens" minted to the curator wallet. Allows for easy tracking via NFT indexers (like the [ZORA API](https://api.zora.co/)
+5. Ability for curators to remove their listings by burning their non-transferable listingTokens
+
 
 ### What are these contracts?
 1. `CuratorSkeletonNFT.sol`
@@ -36,7 +36,7 @@
 ### How do I use this in my site?
 
 1. Use wagmi/ethers/web3.js with the given artifacts (in the node package) or typechain.
-2. Check out the [https://www.npmjs.com/package/@public-assembly/curation-interactions](@public-assembly/curation-interactions) package for custom hooks + components designed to simplify contract interactions
+2. Check out the [@public-assembly/curation-interactions](https://www.npmjs.com/package/@public-assembly/curation-interactions) package for custom hooks + components designed to simplify contract interactions
 5. ✨
 
 ### Local development

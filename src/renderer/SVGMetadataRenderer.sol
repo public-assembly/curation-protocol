@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 import { IMetadataRenderer } from "../interfaces/IMetadataRenderer.sol";
 import { ICuratorInfo, IERC721Metadata } from "../interfaces/ICuratorInfo.sol";
+import { IZoraDrop } from "../interfaces/IZoraDrop.sol";
 import { ICurator } from "../interfaces/ICurator.sol";
+
 import { CurationMetadataBuilder } from "./CurationMetadataBuilder.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SVGMetadataRenderer is IMetadataRenderer {
     function initializeWithData(bytes memory initData) public {}
@@ -26,12 +29,69 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         return string.concat("hsl(", Strings.toString(h), ",", Strings.toString(s), "%,", Strings.toString(l), "%)");
     }
 
+    function _getTotalSupplySaturation(address nft) internal view returns (uint16) {
+        try ICurator(nft).totalSupply() returns (uint256 supply) {
+            if (supply > 10000) {
+                return 100;
+            }
+            if (supply > 1000) {
+                return 75;
+            }
+            if (supply > 100) {
+                return 50;
+            }
+        } catch {
+        }
+        return 10;
+    }
+
+    function _getEditionPercentMintedSaturationSquareDensity(address nft) internal view returns (uint16 saturation, uint256 density) {
+        try IZoraDrop(nft).saleDetails() returns (IZoraDrop.SaleDetails memory saleDetails) {
+            uint256 bpsMinted = (saleDetails.totalMinted * 10000) / saleDetails.maxSupply;
+            if (bpsMinted > 7500) {
+                return (100, 20);
+            }
+            if (bpsMinted > 5000) {
+                return (75, 50);
+            }
+            if (bpsMinted > 2500) {
+                return (50, 70);
+            }
+        } catch {
+        }
+        return (10, 100);
+    }
+
     function generateGridForAddress(
         address target,
         RenderingType types,
         address owner
-    ) public pure returns (string memory) {
+    ) public view returns (string memory) {
         uint16 saturationOuter = 25;
+
+        uint256 squares = 0;
+        uint256 freqDiv = 23;
+        uint256 hue = 0;
+
+        if (types == RenderingType.NFT) {
+            squares = 4;
+            freqDiv = 23;
+            hue = 168;
+            saturationOuter = _getTotalSupplySaturation(owner);
+        }
+
+        if (types == RenderingType.EDITION) {
+            (saturationOuter, freqDiv) = _getEditionPercentMintedSaturationSquareDensity(owner);
+            hue = 317;
+        }
+
+        if (types == RenderingType.ADDRESS) {
+            hue = 317;
+        }
+
+        if (types == RenderingType.CURATION) {
+            hue = 120;
+        }
 
         string memory svgInner = string.concat(
             CurationMetadataBuilder._makeSquare({ size: 720, x: 0, y: 0, color: makeHSL({ h: 317, s: saturationOuter, l: 30 }) }),
@@ -39,19 +99,6 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             CurationMetadataBuilder._makeSquare({ size: 480, x: 60, y: 180, color: makeHSL({ h: 317, s: saturationOuter, l: 70 }) }),
             CurationMetadataBuilder._makeSquare({ size: 60, x: 90, y: 270, color: makeHSL({ h: 317, s: saturationOuter, l: 70 }) })
         );
-
-        uint256 squares = 0;
-        uint256 freqDiv = 23;
-
-        if (types == RenderingType.NFT) {
-            squares = 4;
-            freqDiv = 23;
-        }
-
-        if (types == RenderingType.EDITION) {
-            squares = 6;
-            freqDiv = 10;
-        }
 
         uint256 addr = uint160(uint160(owner));
         for (uint256 i = 0; i < squares * squares; i++) {
@@ -67,7 +114,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
 
         return
             CurationMetadataBuilder.encodeURI(
-                "application/svg+xml",
+                "image/svg+xml",
                 string.concat('<svg viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg" width="720" height="720">', svgInner, "</svg>")
             );
     }

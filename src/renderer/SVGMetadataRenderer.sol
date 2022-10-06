@@ -40,8 +40,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             if (supply > 100) {
                 return 50;
             }
-        } catch {
-        }
+        } catch {}
         return 10;
     }
 
@@ -57,8 +56,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             if (bpsMinted > 2500) {
                 return (50, 70);
             }
-        } catch {
-        }
+        } catch {}
         return (10, 100);
     }
 
@@ -159,11 +157,17 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         ICurator.Listing memory listing = curator.getListing(tokenId);
 
         string memory curationName = "Untitled NFT";
-        RenderingType renderingType = RenderingType.CONTRACT;
+        RenderingType renderingType = RenderingType.ADDRESS;
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
             renderingType = RenderingType.NFT;
         }
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT()) {
+            renderingType = RenderingType.CONTRACT;
+        }
+        if (listing.curationTargetType == curator.CURATION_TYPE_ZORA_EDITION()) {
+            renderingType = RenderingType.EDITION;
+        }
+        if (listing.curationTargetType == curator.CURATION_TYPE_CURATION_CONTRACT()) {
             renderingType = RenderingType.CONTRACT;
         }
 
@@ -186,7 +190,6 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             "\\n\\nA project of public assembly. "
         );
         keys[2] = CurationMetadataBuilder.key_image;
-        // console2.log(uint16(renderingType));
         values[2] = generateGridForAddress(msg.sender, renderingType, listing.curatedAddress);
 
         return CurationMetadataBuilder.generateJSON(keys, values);

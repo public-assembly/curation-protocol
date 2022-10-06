@@ -5,10 +5,15 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
+/// @title CurationMetadataBuilder
+/// @author Iain Nash
+/// @notice Curation Metadata Builder Tools
 library CurationMetadataBuilder {
     string constant key_name = "name";
     string constant key_description = "description";
     string constant key_image = "image";
+
+    string constant mime_json = "application/json";
 
     function encodeURI(string memory uriType, string memory result) internal pure returns (string memory) {
         return string.concat("data:", uriType, ";base64,", string(Base64.encode(bytes(result))));
@@ -23,7 +28,7 @@ library CurationMetadataBuilder {
             }
             result = string(abi.encodePacked(result, '"', keys[i], '": "', values[i], '"', postfix));
         }
-        return encodeURI("application/json", result);
+        return encodeURI(mime_json, result);
     }
 
     function map(

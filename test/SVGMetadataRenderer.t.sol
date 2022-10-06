@@ -57,7 +57,7 @@ contract SVGMetadataRendererTest is CurationTestSetup {
         console2.log(string(vm.ffi(args)));
     }
 
-    function test_AddListings() public {
+    function test_AddListingsIndexed() public {
 
         deployMockCurator();
 

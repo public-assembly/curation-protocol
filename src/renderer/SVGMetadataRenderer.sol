@@ -8,6 +8,7 @@ import { ICuratorInfo, IERC721Metadata } from "../interfaces/ICuratorInfo.sol";
 import { IZoraDrop } from "../interfaces/IZoraDrop.sol";
 import { ICurator } from "../interfaces/ICurator.sol";
 
+import { CurationMetadataBuilder } from "./CurationMetadataBuilder.sol";
 import { MetadataBuilder } from "micro-onchain-metadata-utils/MetadataBuilder.sol";
 import { MetadataJSONKeys } from "micro-onchain-metadata-utils/MetadataJSONKeys.sol";
 
@@ -30,7 +31,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         return string.concat("hsl(", Strings.toString(h), ",", Strings.toString(s), "%,", Strings.toString(l), "%)");
     }
 
-    function _getTotalSupplySaturation(address nft) internal view returns (uint16) {
+    function _getTotalSupplySaturation(address nft) public view returns (uint16) {
         try ICurator(nft).totalSupply() returns (uint256 supply) {
             if (supply > 10000) {
                 return 100;
@@ -111,12 +112,12 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             }
         }
 
-        return MetadataBuilder.generateEncodedSVG("0 0 720 720", "720", "720", svgInner);
+        return MetadataBuilder.generateEncodedSVG(svgInner, "0 0 720 720", "720", "720");
     }
 
     function contractURI() external view override returns (string memory) {
         ICuratorInfo curation = ICuratorInfo(msg.sender);
-        MetadataBuilder.JSONItem[] items = new MetadataBuilder.JSONItem[](3);
+        MetadataBuilder.JSONItem[] memory items = new MetadataBuilder.JSONItem[](3);
 
         string memory curationName = "Untitled NFT";
 
@@ -124,11 +125,11 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             curationName = result;
         } catch {}
 
-        items[0].name = MetadataJSONKeys.keyName;
+        items[0].key = MetadataJSONKeys.keyName;
         items[0].value = string.concat("Curator: ", curation.name());
         items[0].quote = true;
 
-        items[1].name = MetadataJSONKeys.keyDescription;
+        items[1].key = MetadataJSONKeys.keyDescription;
         items[1].value = string.concat(
             "This is a curation NFT owned by ",
             Strings.toHexString(curation.owner()),
@@ -137,44 +138,68 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             curationName,
             "\\n\\nThese NFTs only mark curations and are non-transferrable."
             "\\n\\nView or manage this curation at: "
-            "https://public---assembly.com/",
+            "https://public---assembly.com/curation/",
             Strings.toHexString(msg.sender),
             "\\n\\nA project of public assembly."
         );
         items[1].quote = true;
-        items[2].name = MetadataJSONKeys.keyImage;
+        items[2].key = MetadataJSONKeys.keyImage;
         items[2].quote = true;
         items[2].value = generateGridForAddress(msg.sender, RenderingType.CURATION, address(0x0));
 
-        return CurationMetadataBuilder.generateEncodedJSON(items);
+        return MetadataBuilder.generateEncodedJSON(items);
     }
 
     function tokenURI(uint256 tokenId) external view override returns (string memory) {
         ICurator curator = ICurator(msg.sender);
 
-        MetadataBuilder.JSONItem[] items = new MetadataBuilder.JSONItem[](3);
-        MetadataBuilder.JSONItem[] properties = new MetadataBuilder.JSONItem[](0);
+        MetadataBuilder.JSONItem[] memory items = new MetadataBuilder.JSONItem[](4);
+        MetadataBuilder.JSONItem[] memory properties = new MetadataBuilder.JSONItem[](0);
         ICurator.Listing memory listing = curator.getListing(tokenId);
 
         string memory curationName = "Untitled NFT";
+        string memory curationType = "Generic";
         RenderingType renderingType = RenderingType.ADDRESS;
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
             renderingType = RenderingType.NFT;
             properties = new MetadataBuilder.JSONItem[](3);
-            properites[0].name = "type";
-            properties[0].value = "NFT Item";
-            properties[1].name = "contract";
+            properties[0].key = "type";
+            properties[0].value = "nft item";
+            properties[0].quote = true;
+            properties[1].key = "contract";
             properties[1].value = Strings.toHexString(listing.curatedAddress);
-            
-        }
-        if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT()) {
+            properties[1].quote = true;
+            if (listing.hasTokenId) {
+                properties[2].key = "token id";
+                properties[2].value = Strings.toString(uint256(listing.selectedTokenId));
+                properties[2].quote = true;
+            }
+        } else if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT()) {
             renderingType = RenderingType.CONTRACT;
-        }
-        if (listing.curationTargetType == curator.CURATION_TYPE_ZORA_EDITION()) {
+            properties[0].key = "type";
+            properties[0].value = "nft contract";
+            properties[0].quote = true;
+            properties[1].key = "contract";
+            properties[1].value = Strings.toHexString(listing.curatedAddress);
+            properties[1].quote = true;
+        } else if (listing.curationTargetType == curator.CURATION_TYPE_ZORA_EDITION()) {
+            properties = new MetadataBuilder.JSONItem[](2);
+            properties[0].key = "type";
+            properties[0].value = "zora edition";
+            properties[0].quote = true;
+            properties[1].key = "contract";
+            properties[1].value = Strings.toHexString(listing.curatedAddress);
+            properties[1].quote = true;
             renderingType = RenderingType.EDITION;
-        }
-        if (listing.curationTargetType == curator.CURATION_TYPE_CURATION_CONTRACT()) {
+        } else if (listing.curationTargetType == curator.CURATION_TYPE_CURATION_CONTRACT()) {
             renderingType = RenderingType.CONTRACT;
+            properties = new MetadataBuilder.JSONItem[](2);
+            properties[0].key = "type";
+            properties[0].value = "curation";
+            properties[0].quote = true;
+            properties[1].key = "contract";
+            properties[1].value = Strings.toHexString(listing.curatedAddress);
+            properties[1].quote = true;
         }
 
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT() || listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
@@ -185,19 +210,27 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             }
         }
 
-        keys[0] = CurationMetadataBuilder.key_name;
-        values[0] = string.concat("Curation #", Strings.toString(tokenId), ": ", curationName);
-        keys[1] = CurationMetadataBuilder.key_description;
-        values[1] = string.concat(
+        items[0].key = MetadataJSONKeys.keyName;
+        items[0].value = string.concat("Curation #", Strings.toString(tokenId), ": ", curationName);
+        items[0].quote = true;
+        items[1].key = MetadataJSONKeys.keyDescription;
+        items[1].value = string.concat(
             "This is an item curated by ",
             Strings.toHexString(listing.curator),
             "\\n\\nTo remove this curation, burn the NFT. "
             "\\n\\nThis NFT is non-transferrable. "
-            "\\n\\nA project of public assembly. "
+            "\\n\\nView or manage this curation at: "
+            "https://public---assembly.com/curation/",
+            Strings.toHexString(msg.sender)
         );
-        keys[2] = CurationMetadataBuilder.key_image;
-        values[2] = generateGridForAddress(msg.sender, renderingType, listing.curatedAddress);
+        items[1].quote = true;
+        items[2].key = MetadataJSONKeys.keyImage;
+        items[2].value = generateGridForAddress(msg.sender, renderingType, listing.curatedAddress);
+        items[2].quote = true;
+        items[3].key = MetadataJSONKeys.keyProperties;
+        items[3].value = MetadataBuilder.generateJSON(properties);
+        items[3].quote = false;
 
-        return CurationMetadataBuilder.generateJSON(keys, values);
+        return MetadataBuilder.generateEncodedJSON(items);
     }
 }

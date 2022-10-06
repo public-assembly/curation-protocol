@@ -4,3 +4,6 @@
 [submodule "lib/sol2string"]
 	path = lib/sol2string
 	url = https://github.com/moodlezoup/sol2string
+[submodule "lib/micro-onchain-metadata-utils"]
+	path = lib/micro-onchain-metadata-utils
+	url = https://github.com/iainnash/micro-onchain-metadata-utils

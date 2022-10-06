@@ -167,8 +167,15 @@ contract Curator is ICurator, UUPS, Ownable, CuratorStorageV1, CuratorSkeletonNF
     */
 
     function addListings(Listing[] memory listings) external onlyActive {
-        if (curationPass.balanceOf(msg.sender) == 0) {
-            if (msg.sender != owner()) {
+        if (msg.sender != owner()) {
+            if (address(curationPass).code.length == 0) {
+                revert PASS_REQUIRED();
+            }
+            try curationPass.balanceOf(msg.sender) returns (uint256 count) {
+                if (count == 0) {
+                    revert PASS_REQUIRED();
+                }
+            } catch {
                 revert PASS_REQUIRED();
             }
         }

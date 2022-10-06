@@ -5,6 +5,7 @@ interface ICurator {
     function CURATION_TYPE_GENERIC() external view returns (uint16);
     function CURATION_TYPE_NFT_CONTRACT() external view returns (uint16);
     function CURATION_TYPE_CONTRACT() external view returns (uint16);
+    function CURATION_TYPE_CURATION_CONTRACT() external view returns (uint16);
     function CURATION_TYPE_NFT_ITEM() external view returns (uint16);
     function CURATION_TYPE_WALLET() external view returns (uint16);
     function CURATION_TYPE_ZORA_EDITION() external view returns (uint16);

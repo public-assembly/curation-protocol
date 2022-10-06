@@ -8,7 +8,8 @@ import { ICuratorInfo, IERC721Metadata } from "../interfaces/ICuratorInfo.sol";
 import { IZoraDrop } from "../interfaces/IZoraDrop.sol";
 import { ICurator } from "../interfaces/ICurator.sol";
 
-import { CurationMetadataBuilder } from "./CurationMetadataBuilder.sol";
+import { MetadataBuilder } from "micro-onchain-metadata-utils/MetadataBuilder.sol";
+import { MetadataJSONKeys } from "micro-onchain-metadata-utils/MetadataJSONKeys.sol";
 
 contract SVGMetadataRenderer is IMetadataRenderer {
     function initializeWithData(bytes memory initData) public {}
@@ -110,17 +111,12 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             }
         }
 
-        return
-            CurationMetadataBuilder.encodeURI(
-                "image/svg+xml",
-                string.concat('<svg viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg" width="720" height="720">', svgInner, "</svg>")
-            );
+        return MetadataBuilder.generateEncodedSVG("0 0 720 720", "720", "720", svgInner);
     }
 
     function contractURI() external view override returns (string memory) {
         ICuratorInfo curation = ICuratorInfo(msg.sender);
-        string[] memory keys = new string[](3);
-        string[] memory values = new string[](3);
+        MetadataBuilder.JSONItem[] items = new MetadataBuilder.JSONItem[](3);
 
         string memory curationName = "Untitled NFT";
 
@@ -128,10 +124,12 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             curationName = result;
         } catch {}
 
-        keys[0] = CurationMetadataBuilder.key_name;
-        values[0] = string.concat("Curator: ", curation.name());
-        keys[1] = CurationMetadataBuilder.key_description;
-        values[1] = string.concat(
+        items[0].name = MetadataJSONKeys.keyName;
+        items[0].value = string.concat("Curator: ", curation.name());
+        items[0].quote = true;
+
+        items[1].name = MetadataJSONKeys.keyDescription;
+        items[1].value = string.concat(
             "This is a curation NFT owned by ",
             Strings.toHexString(curation.owner()),
             "\\n\\nThe NFTs in this collection mark curators curating this collection."
@@ -143,23 +141,31 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             Strings.toHexString(msg.sender),
             "\\n\\nA project of public assembly."
         );
-        keys[2] = CurationMetadataBuilder.key_image;
-        values[2] = generateGridForAddress(msg.sender, RenderingType.CURATION, address(0x0));
+        items[1].quote = true;
+        items[2].name = MetadataJSONKeys.keyImage;
+        items[2].quote = true;
+        items[2].value = generateGridForAddress(msg.sender, RenderingType.CURATION, address(0x0));
 
-        return CurationMetadataBuilder.generateJSON(keys, values);
+        return CurationMetadataBuilder.generateEncodedJSON(items);
     }
 
     function tokenURI(uint256 tokenId) external view override returns (string memory) {
         ICurator curator = ICurator(msg.sender);
-        string[] memory keys = new string[](3);
-        string[] memory values = new string[](3);
 
+        MetadataBuilder.JSONItem[] items = new MetadataBuilder.JSONItem[](3);
+        MetadataBuilder.JSONItem[] properties = new MetadataBuilder.JSONItem[](0);
         ICurator.Listing memory listing = curator.getListing(tokenId);
 
         string memory curationName = "Untitled NFT";
         RenderingType renderingType = RenderingType.ADDRESS;
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_ITEM()) {
             renderingType = RenderingType.NFT;
+            properties = new MetadataBuilder.JSONItem[](3);
+            properites[0].name = "type";
+            properties[0].value = "NFT Item";
+            properties[1].name = "contract";
+            properties[1].value = Strings.toHexString(listing.curatedAddress);
+            
         }
         if (listing.curationTargetType == curator.CURATION_TYPE_NFT_CONTRACT()) {
             renderingType = RenderingType.CONTRACT;

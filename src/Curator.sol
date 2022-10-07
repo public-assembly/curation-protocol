@@ -52,6 +52,7 @@ contract Curator is
     }
 
     /// @notice Modifier that restricts entry access to an admin or curator
+    /// @param listingId to check access for
     modifier onlyCuratorOrAdmin(uint256 listingId) {
         if (owner() != msg.sender || idToListing[listingId].curator != msg.sender) {
             revert ACCESS_NOT_ALLOWED();
@@ -62,7 +63,6 @@ contract Curator is
 
     /// @notice Global constructor – these variables will not change with further proxy deploys
     /// @param _curatorFactory Curator Factory Address
-
     constructor(address _curatorFactory) payable initializer {
         curatorFactory = ICuratorFactory(_curatorFactory);
     }
@@ -113,6 +113,7 @@ contract Curator is
     }
 
     /// @dev Getter for acessing Listing information for a specific tokenId
+    /// @param index aka tokenId to retrieve Listing info for 
     function getListing(uint256 index) external view override returns (Listing memory) {
         ownerOf(index);
         return idToListing[index];
@@ -145,6 +146,7 @@ contract Curator is
      ***/
 
     /// @dev Allows contract owner to update curation limit
+    /// @param newLimit new curationLimit to assign
     function updateCurationLimit(uint256 newLimit) external onlyOwner {
         _updateCurationLimit(newLimit);
     }
@@ -160,6 +162,7 @@ contract Curator is
     }
 
     /// @dev Allows contract owner to freeze all contract functionality starting from a given Unix timestamp
+    /// @param timestamp unix timestamp in seconds
     function freezeAt(uint256 timestamp) external onlyOwner {
 
         // Prevents owner from adjusting freezeAt time if contract alrady frozen
@@ -171,6 +174,8 @@ contract Curator is
     }
 
     /// @dev Allows contract owner to update renderer address and pass in an optional initializer for the new renderer
+    /// @param _newRenderer address of new renderer
+    /// @param _renderInitializer bytes encoded string value passed into new renderer 
     function updateRenderer(address _newRenderer, bytes memory _rendererInitializer) external onlyOwner {
         _updateRenderer(IMetadataRenderer(_newRenderer), _rendererInitializer);
     }
@@ -186,6 +191,7 @@ contract Curator is
     }
 
     /// @dev Allows contract owner to update the ERC721 Curation Pass being used to restrict access to curation functionality
+    /// @param _curationPass address of new ERC721 Curation Pass
     function updateCurationPass(IERC721Upgradeable _curationPass) public onlyOwner {
         curationPass = _curationPass;
 
@@ -193,6 +199,7 @@ contract Curator is
     }
 
     /// @dev Allows contract owner to update the ERC721 Curation Pass being used to restrict access to curation functionality
+    /// @param _setPaused boolean of new curation active state
     function setCurationPaused(bool _setPaused) public onlyOwner {
         
         // Prevents owner from updating the curation active state to the current active state
@@ -218,6 +225,7 @@ contract Curator is
      ***/
 
     /// @dev Allows owner or curator to curate Listings --> which mints a listingRecord token to the msg.sender
+    /// @param listings array of Listing structs
     function addListings(Listing[] memory listings) external onlyActive {
         
         // Access control for non owners to acess addListings functionality 
@@ -260,6 +268,8 @@ contract Curator is
     }
 
     /// @dev Allows owner or curator to curate Listings --> which mints listingRecords to the msg.sender
+    /// @param tokenIds listingRecords to update SortOrders for    
+    /// @param sortOrders sortOrdres to update listingRecords
     function updateSortOrders(uint256[] calldata tokenIds, int32[] calldata sortOrders) external onlyActive {
         
         // prevents users from submitting invalid inputs
@@ -286,6 +296,7 @@ contract Curator is
      ***/
 
     /// @dev allows owner or curators to burn a specfic listingRecord NFT which also removes it from the listings mapping
+    /// @param tokenIds listingId to burn        
     function burn(uint256 listingId) public onlyActive {
 
         // ensures that msg.sender must be contract owner or the curator of the specific listingId 
@@ -293,7 +304,8 @@ contract Curator is
     }
 
 
-/// @dev allows owner or curators to burn specfic listingRecord NFTs which also removes them from the listings mapping
+    /// @dev allows owner or curators to burn specfic listingRecord NFTs which also removes them from the listings mapping
+    /// @param listingIds array of listingIds to burn    
     function burnBatch(uint256[] calldata listingIds) external onlyActive {
         unchecked {
             for (uint256 i = 0; i < listingIds.length; ++i) {
@@ -326,6 +338,7 @@ contract Curator is
         return numAdded - numRemoved;
     }
 
+    /// @param id id to check owner for
     function ownerOf(uint256 id) public view virtual override returns (address) {
         if (!_exists(id)) {
             revert TOKEN_HAS_NO_OWNER();
@@ -334,11 +347,12 @@ contract Curator is
     }
 
     /// @notice Token URI Getter, proxies to metadataRenderer
+    /// @param tokenId id to get tokenURI info for     
     function tokenURI(uint256 tokenId) external view override returns (string memory) {
         return renderer.tokenURI(tokenId);
     }
 
-    /// @notice Contract URI Getter, proxies to metadataRenderer
+    /// @notice Contract URI Getter, proxies to metadataRenderer    
     function contractURI() external view override returns (string memory) {
         return renderer.contractURI();
     }

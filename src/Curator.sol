@@ -113,14 +113,12 @@ contract Curator is
     }
 
     /// @dev Getter for acessing Listing information for a specific tokenId
-    /// @return boolean if address is admin
     function getListing(uint256 index) external view override returns (Listing memory) {
         ownerOf(index);
         return idToListing[index];
     }
 
     /// @dev Getter for acessing Listing information for all active listings
-    /// @return boolean if address is admin
     function getListings() external view override returns (Listing[] memory activeListings) {
         unchecked {
             activeListings = new Listing[](numAdded - numRemoved);

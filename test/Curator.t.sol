@@ -149,7 +149,7 @@ contract CuratorTest is CurationTestSetup {
         burnBatchIds[0] = 1;
         burnBatchIds[0] = 2;
         vm.expectRevert(ICurator.CURATION_PAUSED.selector);
-        curator.burnBatch(burnBatchIds);
+        curator.removeListings(burnBatchIds);
     }
 
     function test_RemoveListingsFailIfFrozen() public {
@@ -164,6 +164,6 @@ contract CuratorTest is CurationTestSetup {
         burnBatchIds[0] = 1;
         burnBatchIds[0] = 2;
         vm.expectRevert(ICurator.CURATION_FROZEN.selector);
-        curator.burnBatch(burnBatchIds);
+        curator.removeListings(burnBatchIds);
     }
 }

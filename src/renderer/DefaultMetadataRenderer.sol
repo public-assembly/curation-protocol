@@ -5,6 +5,10 @@ import { IMetadataRenderer } from "../interfaces/IMetadataRenderer.sol";
 import { IOwnable } from "../lib/interfaces/IOwnable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
+/**
+ * @notice This is the default metadata renderer for string concatenated rendering.
+ * @author iain@zora.co
+ */
 contract DefaultMetadataRenderer is IMetadataRenderer {
     string defaultBaseURI;
     mapping(address => string) overrideBaseURI;

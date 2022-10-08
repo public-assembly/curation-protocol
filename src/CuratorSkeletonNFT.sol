@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
@@ -7,7 +7,9 @@ import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cou
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 import { IERC5192 } from "./IERC5192.sol";
 
-/// @notice Base non-transferrable optimized nft contract for FWB
+/// @author iain@zora.co
+/// @notice Base non-transferrable optimized nft contract
+/// @notice Modified for base class usage and supports EIP-5192
 abstract contract CuratorSkeletonNFT is
     IERC165Upgradeable,
     IERC721Upgradeable,

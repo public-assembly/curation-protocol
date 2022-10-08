@@ -175,7 +175,7 @@ contract Curator is
 
     /// @dev Allows contract owner to update renderer address and pass in an optional initializer for the new renderer
     /// @param _newRenderer address of new renderer
-    /// @param _renderInitializer bytes encoded string value passed into new renderer 
+    /// @param _rendererInitializer bytes encoded string value passed into new renderer 
     function updateRenderer(address _newRenderer, bytes memory _rendererInitializer) external onlyOwner {
         _updateRenderer(IMetadataRenderer(_newRenderer), _rendererInitializer);
     }
@@ -296,7 +296,7 @@ contract Curator is
      ***/
 
     /// @dev allows owner or curators to burn a specfic listingRecord NFT which also removes it from the listings mapping
-    /// @param tokenIds listingId to burn        
+    /// @param listingId listingId to burn        
     function burn(uint256 listingId) public onlyActive {
 
         // ensures that msg.sender must be contract owner or the curator of the specific listingId 
@@ -306,7 +306,7 @@ contract Curator is
 
     /// @dev allows owner or curators to burn specfic listingRecord NFTs which also removes them from the listings mapping
     /// @param listingIds array of listingIds to burn    
-    function burnBatch(uint256[] calldata listingIds) external onlyActive {
+    function removeListings(uint256[] calldata listingIds) external onlyActive {
         unchecked {
             for (uint256 i = 0; i < listingIds.length; ++i) {
                 _burnTokenWithChecks(listingIds[i]);

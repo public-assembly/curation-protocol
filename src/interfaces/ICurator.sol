@@ -1,13 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+/**
+ * Curator interfaces
+ */
 interface ICurator {
+    /// @notice Convience getter for Generic/unknown types (default 0). Used for metadata as well.
     function CURATION_TYPE_GENERIC() external view returns (uint16);
+    /// @notice Convience getter for NFT contract types. Used for metadata as well.
     function CURATION_TYPE_NFT_CONTRACT() external view returns (uint16);
+    /// @notice Convience getter for generic contract types. Used for metadata as well.
     function CURATION_TYPE_CONTRACT() external view returns (uint16);
+    /// @notice Convience getter for curation contract types. Used for metadata as well.
     function CURATION_TYPE_CURATION_CONTRACT() external view returns (uint16);
+    /// @notice Convience getter for NFT item types. Used for metadata as well.
     function CURATION_TYPE_NFT_ITEM() external view returns (uint16);
+    /// @notice Convience getter for wallet types. Used for metadata as well.
     function CURATION_TYPE_WALLET() external view returns (uint16);
+    /// @notice Convience getter for ZORA drops contract types. Used for metadata as well.
     function CURATION_TYPE_ZORA_EDITION() external view returns (uint16);
 
     /// @notice Shared listing struct for both access and storage.
@@ -28,11 +38,20 @@ interface ICurator {
         uint16 chainId;
     }
 
+    /// @notice Getter for a single listing id
     function getListing(uint256 listingIndex) external view returns (Listing memory);
 
+    /// @notice Getter for a all listings
     function getListings() external view returns (Listing[] memory activeListings);
 
+    /// @notice Total supply getter for number of active listings
     function totalSupply() external view returns (uint256);
+
+    /// @notice Removes a list of listings. Same as `burn` but supports multiple listings.
+    function removeListings(uint256[] calldata listingIds) external;
+
+    /// @notice Removes a single listing. Named for ERC721 de-facto compat
+    function burn(uint256 listingId) external;
 
     /// @notice Emitted when a listing is added
     event ListingAdded(address indexed curator, Listing listing);

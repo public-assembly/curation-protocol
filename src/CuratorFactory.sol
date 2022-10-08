@@ -8,12 +8,24 @@ import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { ICurator } from "./interfaces/ICurator.sol";
 import { Curator } from "./Curator.sol";
 
+/**
+ * @notice Storage contracts
+ */
 abstract contract CuratorFactoryStorageV1 {
     address public defaultMetadataRenderer;
 
     mapping(address => mapping(address => bool)) internal isUpgrade;
+
+    uint256[50] __gap;
 }
 
+/**
+ * @notice Base contract for curation functioanlity. Inherits ERC721 standard from CuratorSkeletonNFT.sol
+ *      (curation information minted as non-transferable "listingRecords" to curators to allow for easy integration with NFT indexers)
+ * @dev For curation contracts: assumes 1. linear mint order
+ * @author iain@zora.co
+ *
+ */
 contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorageV1 {
     address public immutable curatorImpl;
     bytes32 public immutable curatorHash;

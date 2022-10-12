@@ -54,7 +54,7 @@ contract Curator is
     /// @notice Modifier that restricts entry access to an admin or curator
     /// @param listingId to check access for
     modifier onlyCuratorOrAdmin(uint256 listingId) {
-        if (owner() != msg.sender || idToListing[listingId].curator != msg.sender) {
+        if (owner() != msg.sender && idToListing[listingId].curator != msg.sender) {
             revert ACCESS_NOT_ALLOWED();
         }
 

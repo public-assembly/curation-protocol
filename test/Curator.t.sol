@@ -123,6 +123,46 @@ contract CuratorTest is CurationTestSetup {
         curator.getListings();
     }
 
+    function test_RemoveListingsByCurator() public {
+        deployMockCurator();
+
+        address randomLister = address(0x312412);
+        addBatchListings(5, randomLister);
+
+        vm.startPrank(randomLister);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(randomLister, address(0x0), 2);
+        curator.burn(2);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(randomLister, address(0x0), 4);
+        curator.burn(4);
+        vm.stopPrank();
+
+        curator.getListings();
+    }
+
+        function test_RemoveListingsByAdmin() public {
+        deployMockCurator();
+
+        address randomLister = address(0x312412);
+        addBatchListings(5, randomLister);
+
+        vm.startPrank(mockCurationManager);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(randomLister, address(0x0), 2);
+        curator.burn(2);
+
+        vm.expectEmit(true, true, true, true);
+        mockTokenPass.emitTransfer(randomLister, address(0x0), 4);
+        curator.burn(4);
+        vm.stopPrank();
+
+        curator.getListings();
+    }
+
     function test_RemoveListingFailIfPaused() public {
         deployMockCurator();
 

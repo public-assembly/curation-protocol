@@ -35,7 +35,7 @@ contract CuratorTest is CurationTestSetup {
             mockCurationManager,
             "Mock Curation Contract",
             "MKCURATION",
-            address(mockTokenPass),
+            address(mockCurationPass),
             false,
             0,
             address(0x0),
@@ -89,9 +89,9 @@ contract CuratorTest is CurationTestSetup {
         listingsToAdd[0].hasTokenId = false;
         listingsToAdd[0].curationTargetType = curator.CURATION_TYPE_WALLET();
 
-        mockTokenPass.mint(mockCurationManager);
+        mockCurationPass.mint(mockCurationManager);
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(address(0x0), mockCurationManager, 0);
+        mockCurationPass.emitTransfer(address(0x0), mockCurationManager, 0);
         vm.prank(mockCurationManager);
         curator.addListings(listingsToAdd);
     }
@@ -112,11 +112,11 @@ contract CuratorTest is CurationTestSetup {
         vm.startPrank(mockCurationManager);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(mockCurationManager, address(0x0), 2);
+        mockCurationPass.emitTransfer(mockCurationManager, address(0x0), 2);
         curator.burn(2);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(mockCurationManager, address(0x0), 4);
+        mockCurationPass.emitTransfer(mockCurationManager, address(0x0), 4);
         curator.burn(4);
         vm.stopPrank();
 
@@ -132,11 +132,11 @@ contract CuratorTest is CurationTestSetup {
         vm.startPrank(randomLister);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(randomLister, address(0x0), 2);
+        mockCurationPass.emitTransfer(randomLister, address(0x0), 2);
         curator.burn(2);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(randomLister, address(0x0), 4);
+        mockCurationPass.emitTransfer(randomLister, address(0x0), 4);
         curator.burn(4);
         vm.stopPrank();
 
@@ -152,11 +152,11 @@ contract CuratorTest is CurationTestSetup {
         vm.startPrank(mockCurationManager);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(randomLister, address(0x0), 2);
+        mockCurationPass.emitTransfer(randomLister, address(0x0), 2);
         curator.burn(2);
 
         vm.expectEmit(true, true, true, true);
-        mockTokenPass.emitTransfer(randomLister, address(0x0), 4);
+        mockCurationPass.emitTransfer(randomLister, address(0x0), 4);
         curator.burn(4);
         vm.stopPrank();
 

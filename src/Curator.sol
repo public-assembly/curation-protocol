@@ -33,7 +33,7 @@ contract Curator is
     uint16 public constant CURATION_TYPE_CONTRACT = 3;
     uint16 public constant CURATION_TYPE_NFT_ITEM = 4;
     uint16 public constant CURATION_TYPE_WALLET = 5;
-    uint16 public constant CURATION_TYPE_ZORA_EDITION = 6;
+    uint16 public constant CURATION_TYPE_ZORA_ERC721 = 6;
 
     /// @notice Reference to factory contract
     ICuratorFactory private immutable curatorFactory;
@@ -195,7 +195,7 @@ contract Curator is
     function updateCurationPass(IERC721Upgradeable _curationPass) public onlyOwner {
         curationPass = _curationPass;
 
-        emit TokenPassUpdated(msg.sender, address(_curationPass));
+        emit CurationPassUpdated(msg.sender, address(_curationPass));
     }
 
     /// @dev Allows contract owner to update the ERC721 Curation Pass being used to restrict access to curation functionality

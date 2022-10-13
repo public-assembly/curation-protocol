@@ -22,7 +22,7 @@ contract CurationTestSetup is Test {
     address internal metadataRenderer;
     address internal zora;
 
-    MockERC721 internal mockTokenPass;
+    MockERC721 internal mockCurationPass;
 
     address internal mockPassHolder;
     address internal mockCurationManager;
@@ -34,8 +34,8 @@ contract CurationTestSetup is Test {
         mockCurationManager = vm.addr(0xB0B);
         mockPassHolder = vm.addr(0xCAB);
 
-        mockTokenPass = new MockERC721();
-        mockTokenPass.mint(mockPassHolder);
+        mockCurationPass = new MockERC721();
+        mockCurationPass.mint(mockPassHolder);
 
         deployCore(zora);
     }
@@ -61,7 +61,7 @@ contract CurationTestSetup is Test {
             mockCurationManager,
             "Mock Curation Contract",
             "MKCURATION",
-            address(mockTokenPass),
+            address(mockCurationPass),
             false,
             0,
             address(0x0),
@@ -85,7 +85,7 @@ contract CurationTestSetup is Test {
             }
         }
 
-        mockTokenPass.mint(minter);
+        mockCurationPass.mint(minter);
         vm.prank(minter);
         curator.addListings(mockListings);
     }

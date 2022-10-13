@@ -18,7 +18,7 @@ interface ICurator {
     /// @notice Convience getter for wallet types. Used for metadata as well.
     function CURATION_TYPE_WALLET() external view returns (uint16);
     /// @notice Convience getter for ZORA drops contract types. Used for metadata as well.
-    function CURATION_TYPE_ZORA_EDITION() external view returns (uint16);
+    function CURATION_TYPE_ZORA_ERC721() external view returns (uint16);
 
     /// @notice Shared listing struct for both access and storage.
     struct Listing {
@@ -59,9 +59,9 @@ interface ICurator {
     /// @notice Emitted when a listing is removed
     event ListingRemoved(address indexed curator, Listing listing);
 
-    /// @notice The token pass has been updated for the curation
+    /// @notice The curation pass has been updated for the curation contract
     /// @dev Any users that have already curated something still can delete their curation.
-    event TokenPassUpdated(address indexed owner, address tokenPass);
+    event CurationPassUpdated(address indexed owner, address curationPass);
 
     /// @notice A new renderer is set
     event SetRenderer(address);
@@ -115,7 +115,7 @@ interface ICurator {
         address _owner,
         string memory _name,
         string memory _symbol,
-        address _tokenPass,
+        address _curationPass,
         bool _pause,
         uint256 _curationLimit,
         address _renderer,

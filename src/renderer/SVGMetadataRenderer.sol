@@ -18,7 +18,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
     enum RenderingType {
         CURATION,
         NFT,
-        EDITION,
+        ZDROP,
         CONTRACT,
         ADDRESS
     }
@@ -46,7 +46,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         return 10;
     }
 
-    function _getEditionPercentMintedSaturationSquareDensity(address nft) internal view returns (uint16 saturation, uint256 density) {
+    function _getZDropPercentMintedSaturationSquareDensity(address nft) internal view returns (uint16 saturation, uint256 density) {
         try IZoraDrop(nft).saleDetails() returns (IZoraDrop.SaleDetails memory saleDetails) {
             uint256 bpsMinted = (saleDetails.totalMinted * 10000) / saleDetails.maxSupply;
             if (bpsMinted > 7500) {
@@ -80,8 +80,8 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             saturationOuter = _getTotalSupplySaturation(owner);
         }
 
-        if (types == RenderingType.EDITION) {
-            (saturationOuter, freqDiv) = _getEditionPercentMintedSaturationSquareDensity(owner);
+        if (types == RenderingType.ZDROP) {
+            (saturationOuter, freqDiv) = _getZDropPercentMintedSaturationSquareDensity(owner);
             hue = 317;
         }
 
@@ -182,15 +182,15 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             properties[1].key = "contract";
             properties[1].value = Strings.toHexString(listing.curatedAddress);
             properties[1].quote = true;
-        } else if (listing.curationTargetType == curator.CURATION_TYPE_ZORA_EDITION()) {
+        } else if (listing.curationTargetType == curator.CURATION_TYPE_ZORA_ERC721()) {
             properties = new MetadataBuilder.JSONItem[](2);
             properties[0].key = "type";
-            properties[0].value = "zora edition";
+            properties[0].value = "zora drop";
             properties[0].quote = true;
             properties[1].key = "contract";
             properties[1].value = Strings.toHexString(listing.curatedAddress);
             properties[1].quote = true;
-            renderingType = RenderingType.EDITION;
+            renderingType = RenderingType.ZDROP;
         } else if (listing.curationTargetType == curator.CURATION_TYPE_CURATION_CONTRACT()) {
             renderingType = RenderingType.CONTRACT;
             properties = new MetadataBuilder.JSONItem[](2);

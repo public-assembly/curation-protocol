@@ -1,15 +1,15 @@
 # Public Curation Protocol
 
 ### High-level overview
-1. Individual curation contracts are ERC721 collections themselves, with curators recieving a non-transferable "listingRecord" that contains the information of the listing they have curated. Curators can "remove" a listing by burning their listingRecords
+1. Individual curation contracts are ERC721 collections themselves, with curators receiving a non-transferable "listingRecord" that contains the information of the listing they have curated. Curators can "remove" a listing by burning their listingRecords
 2. Factory allows for easy creation of individual curation contracts
-3. Active listings on a given curation contract can be retreived by the "getListings()" view call on a given Curator.sol proxy, or by using NFT indexers to gather data on all curationReciepts that have been minted from a given curation contract
+3. Active listings on a given curation contract can be retrieved by the "getListings()" view call on a given Curator.sol proxy, or by using NFT indexers to gather data on all curationReciepts that have been minted from a given curation contract
 4. Listings contain the data specified in the "Listing" struct found in [ICurator.sol](https://github.com/public-assembly/curation-protocol/blob/main/src/interfaces/ICurator.sol)
 
 ### Features these contracts support:
 
 1. Deploying your own ERC721 curation contract
-2. Curation of certain "types" of ethereum addresses. Current types include:
+2. Curation of certain "types" of Ethereum addresses. Current types include:
 - NFT Contract
 - Generic smart contracts
 - Other curation contracts

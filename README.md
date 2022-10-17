@@ -49,8 +49,8 @@
 
 ### Flexibility and safety
 
-All curation contracts are wholly owned by their creator and allow for extensibility with rendering and minting
+All curation contracts are wholly owned by their creator and allow for extensibility with rendering and minting.
 
-All curation listing tokens minted to curators are non-transferable, but allow for the curator to burn the token so as to remove it from the onchain listing and their wallet
+All curation listing tokens minted to curators are non-transferable, but allow for the curator to burn the token so as to remove it from the onchain listing and their wallet.
 
-The metadata renderer abstraction allows these drops contracts to power a variety of on-chain powered projects
+The metadata renderer abstraction allows these drops contracts to power a variety of on-chain powered projects.

@@ -25,7 +25,7 @@
 1. `CuratorSkeletonNFT.sol`
    Each curation contract is its own ERC721 collection. This allows for clear contract ownership, listings as individual tokens that are minted out of the contract, and composability with NFT indexers
 2. `Curator.sol`
-   Base implementaion for curation contracts generated from **CuratorFactory,.sol**. Inherits from **CuratorSkeletonNFT**, and manages all of the curation related functionality  
+   Base implementaion for curation contracts generated from **CuratorFactory.sol**. Inherits from **CuratorSkeletonNFT**, and manages all of the curation related functionality  
 3. `CuratorFactory.sol`
    Gas-optimized factory contract allowing you to easily + for a low gas transaction to create your own curation contract.   
 4. `DefaultMetadataRenderer`

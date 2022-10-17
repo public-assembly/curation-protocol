@@ -31,7 +31,7 @@
 4. `DefaultMetadataRenderer`
    A flexible metadata renderer architecture that allows for centralised and IPFS metadata group roots to be rendered.
 5. `SVGMetadataRenderer`
-   Onchain renderer for curation contracts that encodes information related to a speific listing
+   Onchain renderer for curation contracts that encodes information related to a specific listing
 
 ### How do I use this in my site?
 

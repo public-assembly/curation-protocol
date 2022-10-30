@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import { ICurator } from "./interfaces/ICurator.sol";
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
+import { IAccessControlRegistry } from "onchain-modules/interfaces/IAccessControlRegistry.sol";
 
 
 /**
@@ -17,9 +18,12 @@ abstract contract CuratorStorageV1 is ICurator {
     /// @notice Standard ERC721 symbol for the curator contract
     string internal contractSymbol;
 
-    /// Curation pass as an ERC721 that allows other users to curate.
-    /// @notice Address to ERC721 with `balanceOf` function.
-    IERC721Upgradeable public curationPass;
+    // Curation pass as an ERC721 that allows other users to curate.
+    // @notice Address to ERC721 with `balanceOf` function.
+    // IERC721Upgradeable public curationPass;
+
+    /// @notice Address of the accessControl contract
+    IAccessControlRegistry public accessControl;    
 
     /// Stores virtual mapping array length parameters
     /// @notice Array total size (total size)

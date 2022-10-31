@@ -59,10 +59,6 @@ interface ICurator {
     /// @notice Emitted when a listing is removed
     event ListingRemoved(address indexed curator, Listing listing);
 
-    // @notice The curation pass has been updated for the curation contract
-    // @dev Any users that have already curated something still can delete their curation.
-    // event CurationPassUpdated(address indexed owner, address curationPass);
-
     /// @notice A new accessControl is set
     event SetAccessControl(address);
 
@@ -80,12 +76,6 @@ interface ICurator {
 
     /// @notice This contract is scheduled to be frozen
     event ScheduledFreeze(uint256 timestamp);
-
-    // /// @notice Pass is required to manage curation but not held by attempted updater.
-    // error PASS_REQUIRED();
-
-    // @notice Only the curator of a listing (or owner) can manage that curation
-    // error ONLY_CURATOR();
 
     /// @notice Wrong curator for the listing when attempting to access the listing.
     error WRONG_CURATOR_FOR_LISTING(address setCurator, address expectedCurator);
@@ -122,8 +112,8 @@ interface ICurator {
         uint256 _curationLimit,
         address _renderer,
         bytes memory _rendererInitializer,
-        Listing[] memory _initialListings,
         address _accessControl,
-        bytes memory _accessControlInitializer          
+        bytes memory _accessControlInitializer,   
+        Listing[] memory _initialListings
     ) external;
 }

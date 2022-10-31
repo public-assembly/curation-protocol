@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { UUPS } from "./lib/proxy/UUPS.sol";
 import { ICurator } from "./interfaces/ICurator.sol";
 import { Ownable } from "./lib/utils/Ownable.sol";
@@ -39,30 +38,6 @@ contract Curator is
     /// @notice Reference to factory contract
     ICuratorFactory private immutable curatorFactory;
 
-    // /// @notice Modifier that ensures curation functionality is active and not frozen
-    // modifier onlyActive() {
-    //     if (isPaused && msg.sender != owner()) {
-    //         revert CURATION_PAUSED();
-    //     }
-
-    //     if (frozenAt != 0 && frozenAt < block.timestamp) {
-    //         revert CURATION_FROZEN();
-    //     }
-
-    //     _;
-    // } 
-
-    // /// @notice Modifier that restricts entry access to an admin or curator
-    // /// @param listingId to check access for
-    // modifier onlyCuratorOrAdmin(uint256 listingId) {
-    //     if (owner() != msg.sender && idToListing[listingId].curator != msg.sender) {
-    //         revert ACCESS_NOT_ALLOWED();
-    //     }
-
-    //     _;
-    // }
-
-    // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     /// @notice Modifier that ensures curation functionality is active and not frozen
     modifier onlyActive() {
         if (isPaused && IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 2) {
@@ -76,7 +51,7 @@ contract Curator is
         _;
     }
 
-
+    /// @notice Modifier that restricts entry access to an owner or admin
     modifier onlyOwnerOrAdminAccess() {
         if (
             IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 3 && 
@@ -88,7 +63,7 @@ contract Curator is
         _;
     }
 
-    /// @notice Modifier that restricts entry access to an admin or curator
+    /// @notice Modifier that restricts entry access to an manager/admin or curator
     /// @param listingId to check access for
     modifier onlyCuratorOrManagerAccess(uint256 listingId) {
         if (
@@ -100,7 +75,6 @@ contract Curator is
 
         _;
     }
-    // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
     /// @notice Global constructor – these variables will not change with further proxy deploys
     /// @param _curatorFactory Curator Factory Address
@@ -112,36 +86,30 @@ contract Curator is
     ///  @param _owner User that owns and can accesss contract admin functionality
     ///  @param _name Contract name
     ///  @param _symbol Contract symbol
-    //  @param _curationPass ERC721 contract whose ownership gates access to curation functionality
     ///  @param _pause Sets curation active state upon initialization 
     ///  @param _curationLimit Sets cap for number of listings that can be curated at any time. Doubles as MaxSupply check. 0 = uncapped 
     ///  @param _renderer Renderer contract to use
     ///  @param _rendererInitializer Bytes encoded string to pass into renderer. Leave blank if using SVGMetadataRenderer
-    ///  @param _initialListings Array of Listing structs to curate (aka mint) upon initialization
     ///  @param _accessControl access control contract to use
-    ///  @param _accessControlInitializer Bytes encoded data to pass into accessControl. Leave blank if ???    
+    ///  @param _accessControlInitializer Bytes encoded data to pass into accessControl. Leave blank if ???        
+    ///  @param _initialListings Array of Listing structs to curate (aka mint) upon initialization
     function initialize(
         address _owner,
         string memory _name,
         string memory _symbol,
-        // address _curationPass,
         bool _pause,
         uint256 _curationLimit,
         address _renderer,
         bytes memory _rendererInitializer,
-        Listing[] memory _initialListings,
         address _accessControl,
-        bytes memory _accessControlInitializer        
+        bytes memory _accessControlInitializer,           
+        Listing[] memory _initialListings     
     ) external initializer {
         // Setup owner role
         __Ownable_init(_owner);
         // Setup contract name + symbol
         contractName = _name;
         contractSymbol = _symbol;
-
-        // // Setup curation pass. MUST be set to a valid ERC721 address
-        // curationPass = IERC721Upgradeable(_curationPass);
-
         // Setup metadata renderer
         _updateRenderer(IMetadataRenderer(_renderer), _rendererInitializer);
         // Setup accessControl 
@@ -238,11 +206,6 @@ contract Curator is
         emit SetRenderer(address(renderer));
     }
 
-
-
-
-    //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
     /// @dev Allows contract owner to update accessControl address and pass in an optional initializer for the new accessControl
     /// @param _newAccessControl address of new accessControl
     /// @param _accessControlInitializer bytes encoded data passed into new accessControl 
@@ -259,23 +222,6 @@ contract Curator is
         }
         emit SetAccessControl(address(accessControl));
     }
-
-    //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-
-    
-
-    // /// @dev Allows contract owner to update the ERC721 Curation Pass being used to restrict access to curation functionality
-    // /// @param _curationPass address of new ERC721 Curation Pass
-    // function updateCurationPass(IERC721Upgradeable _curationPass) public onlyOwner {
-    //     curationPass = _curationPass;
-
-    //     emit CurationPassUpdated(msg.sender, address(_curationPass));
-    // }
 
     /// @dev Allows contract owner to update the ERC721 Curation Pass being used to restrict access to curation functionality
     /// @param _setPaused boolean of new curation active state
@@ -305,29 +251,12 @@ contract Curator is
 
     /// @dev Allows owner or curator to curate Listings --> which mints a listingRecord token to the msg.sender
     /// @param listings array of Listing structs
-    function addListings(Listing[] memory listings) external onlyActive {
-        
-        // // Access control for non owners to acess addListings functionality 
-        // if (msg.sender != owner()) {
+    function addListings(Listing[] memory listings) external onlyActive {        
             
-        // Access control for non manager/admins to acess addListings functionality 
+        // Access control to prevent non curators/manager/admins from accessing
         if (IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 1) {
             revert ACCESS_NOT_ALLOWED();
         }            
-        //     // ensures that curationPass is a valid ERC721 address
-        //     if (address(curationPass).code.length == 0) {
-        //         revert PASS_REQUIRED();
-        //     }
-
-        //     // checks if non-owner msg.sender owns the Curation Pass
-        //     try curationPass.balanceOf(msg.sender) returns (uint256 count) {
-        //         if (count == 0) {
-        //             revert PASS_REQUIRED();
-        //         }
-        //     } catch {
-        //         revert PASS_REQUIRED();
-        //     }
-        // }
 
         _addListings(listings, msg.sender);
     }

@@ -38,7 +38,7 @@
 1. Use wagmi/ethers/web3.js with the given artifacts (in the node package) or typechain.
 2. Check out the [@public-assembly/curation-interactions](https://www.npmjs.com/package/@public-assembly/curation-interactions) package for custom hooks + components designed to simplify contract interactions
 3. Check out the [Neosound](https://github.com/public-assembly/neosound) repo for an example application built on top of the curation protocol
-4. Check out this quickstart [doc](https://docs.google.com/document/d/1pD7kf5OsY_80oqTEQy6BTJZ4v22cnZ-1kT8d3vU5Gbw/edit) for notes + video on how to start experimenting with the curation protcol from both a solidity + UI level
+4. Check out this quickstart [doc](https://docs.google.com/document/d/1pD7kf5OsY_80oqTEQy6BTJZ4v22cnZ-1kT8d3vU5Gbw/edit) for notes + video on how to start experimenting with the curation protocol from both a solidity + UI level
 
 ### Local development
 

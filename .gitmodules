@@ -7,3 +7,6 @@
 [submodule "lib/onchain-modules"]
 	path = lib/onchain-modules
 	url = https://github.com/public-assembly/onchain-modules
+[submodule "lib/onchain"]
+	path = lib/onchain
+	url = https://github.com/public-assembly/onchain

@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import { ICurator } from "./interfaces/ICurator.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
-import { IAccessControlRegistry } from "onchain-modules/interfaces/IAccessControlRegistry.sol";
+import { IAccessControlRegistry } from "onchain/interfaces/IAccessControlRegistry.sol";
 
 /**
  @notice Curator storage variables contract.

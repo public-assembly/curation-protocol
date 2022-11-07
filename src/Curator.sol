@@ -8,7 +8,7 @@ import { ICuratorFactory } from "./interfaces/ICuratorFactory.sol";
 import { CuratorSkeletonNFT } from "./CuratorSkeletonNFT.sol";
 import { IMetadataRenderer } from "./interfaces/IMetadataRenderer.sol";
 import { CuratorStorageV1 } from "./CuratorStorageV1.sol";
-import { IAccessControlRegistry } from "onchain-modules/interfaces/IAccessControlRegistry.sol";
+import { IAccessControlRegistry } from "onchain/interfaces/IAccessControlRegistry.sol";
 
 /**
  * @notice Base contract for curation functioanlity. Inherits ERC721 standard from CuratorSkeletonNFT.sol
@@ -35,14 +35,27 @@ contract Curator is
     uint16 public constant CURATION_TYPE_WALLET = 5;
     uint16 public constant CURATION_TYPE_ZORA_ERC721 = 6;
 
+    enum AccessRoles {
+        noAccess
+        curator,
+        manager,
+        admin
+    }
+
+    AccessRoles public accessRoles;
+
     /// @notice Reference to factory contract
     ICuratorFactory private immutable curatorFactory;
 
     /// @notice Modifier that ensures curation functionality is active and not frozen
     modifier onlyActive() {
-        if (isPaused && IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 2) {
+        if (isPaused 
+            & (IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.manager 
+            || msg.sender != owner())
+        ) {
             revert CURATION_PAUSED();
-        }
+        } 
+        
 
         if (frozenAt != 0 && frozenAt < block.timestamp) {
             revert CURATION_FROZEN();
@@ -54,8 +67,8 @@ contract Curator is
     /// @notice Modifier that restricts entry access to an owner or admin
     modifier onlyOwnerOrAdminAccess() {
         if (
-            IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 3 && 
-            owner() != msg.sender
+            IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.admin 
+                && owner() != msg.sender
         ) {
             revert ACCESS_NOT_ALLOWED();
         }
@@ -67,8 +80,8 @@ contract Curator is
     /// @param listingId to check access for
     modifier onlyCuratorOrManagerAccess(uint256 listingId) {
         if (
-            IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 2 && 
-            idToListing[listingId].curator != msg.sender
+            IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.manager  
+                && idToListing[listingId].curator != msg.sender
         ) {
             revert ACCESS_NOT_ALLOWED();
         }
@@ -254,7 +267,7 @@ contract Curator is
     function addListings(Listing[] memory listings) external onlyActive {        
             
         // Access control to prevent non curators/manager/admins from accessing
-        if (IAccessControlRegistry(accessControl).getAccessLevel(msg.sender) < 1) {
+        if (IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.curator ) {
             revert ACCESS_NOT_ALLOWED();
         }            
 

@@ -50,8 +50,8 @@ contract Curator is
     /// @notice Modifier that ensures curation functionality is active and not frozen
     modifier onlyActive() {
         if (isPaused 
-            & (IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.manager 
-            || msg.sender != owner())
+            && (IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.manager 
+            && msg.sender != owner())
         ) {
             revert CURATION_PAUSED();
         } 
@@ -66,9 +66,8 @@ contract Curator is
 
     /// @notice Modifier that restricts entry access to an owner or admin
     modifier onlyOwnerOrAdminAccess() {
-        if (
-            IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.admin 
-                && owner() != msg.sender
+        if (IAccessControlRegistry(accessControl).getAccessLevel(address(this), msg.sender) < accessRoles.admin 
+            && owner() != msg.sender
         ) {
             revert ACCESS_NOT_ALLOWED();
         }

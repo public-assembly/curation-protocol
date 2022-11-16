@@ -12,6 +12,8 @@ interface ICuratorFactory {
     event RegisteredUpgradePath(address implFrom, address implTo);
     /// @notice Emitted when a new metadata renderer is set
     event HasNewMetadataRenderer(address);
+    /// @notice Emitted when a new accessControl is set
+    event HasNewAccessControl(address);
 
     /// @notice Getter to determine if a contract upgrade path is valid.
     function isValidUpgrade(address baseImpl, address newImpl) external view returns (bool);

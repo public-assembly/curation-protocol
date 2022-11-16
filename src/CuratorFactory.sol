@@ -14,6 +14,8 @@ import { Curator } from "./Curator.sol";
 abstract contract CuratorFactoryStorageV1 {
     address public defaultMetadataRenderer;
 
+    address public defaultAccessControl;
+
     mapping(address => mapping(address => bool)) internal isUpgrade;
 
     uint256[50] __gap;
@@ -41,25 +43,36 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
         emit HasNewMetadataRenderer(_renderer);
     }
 
-    function initialize(address _owner, address _defaultMetadataRenderer) external initializer {
+    function setDefaultAccessControl(address _accessControl) external {
+        defaultAccessControl = _accessControl;
+
+        emit HasNewAccessControl(_accessControl);
+    }    
+
+    function initialize(address _owner, address _defaultMetadataRenderer, address _defaultAccessControl) external initializer {
         __Ownable_init(_owner);
         defaultMetadataRenderer = _defaultMetadataRenderer;
+        defaultAccessControl = _defaultAccessControl;
     }
 
     function deploy(
         address curationManager,
         string memory name,
         string memory symbol,
-        address curationPass,
         bool initialPause,
         uint256 curationLimit,
         address renderer,
         bytes memory rendererInitializer,
+        address accessControl,
+        bytes memory accessControlInitializer,        
         ICurator.Listing[] memory listings
     ) external returns (address curator) {
         if (renderer == address(0)) {
             renderer = defaultMetadataRenderer;
         }
+        if (accessControl == address(0)) {
+            accessControl = defaultAccessControl;
+        }        
 
         curator = address(
             new ERC1967Proxy(
@@ -69,11 +82,12 @@ contract CuratorFactory is ICuratorFactory, UUPS, Ownable, CuratorFactoryStorage
                     curationManager,
                     name,
                     symbol,
-                    curationPass,
                     initialPause,
                     curationLimit,
                     renderer,
                     rendererInitializer,
+                    accessControl,
+                    accessControlInitializer,                 
                     listings
                 )
             )

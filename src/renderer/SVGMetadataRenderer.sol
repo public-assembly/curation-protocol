@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IMetadataRenderer } from "../interfaces/IMetadataRenderer.sol";
-import { ICuratorInfo, IERC721Metadata } from "../interfaces/ICuratorInfo.sol";
+import { ICuratorInfo } from "../interfaces/ICuratorInfo.sol";
 import { IZoraDrop } from "../interfaces/IZoraDrop.sol";
 import { ICurator } from "../interfaces/ICurator.sol";
 
@@ -119,9 +119,9 @@ contract SVGMetadataRenderer is IMetadataRenderer {
         ICuratorInfo curation = ICuratorInfo(msg.sender);
         MetadataBuilder.JSONItem[] memory items = new MetadataBuilder.JSONItem[](3);
 
-        string memory curationName = "Untitled NFT";
+        string memory curationName = "Untitled Access Control";
 
-        try curation.curationPass().name() returns (string memory result) {
+        try curation.accessControl().name() returns (string memory result) {
             curationName = result;
         } catch {}
 
@@ -137,10 +137,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             "The curation pass for this NFT is ",
             curationName,
             "\\n\\nThese NFTs only mark curations and are non-transferrable."
-            "\\n\\nView or manage this curation at: "
-            "https://public---assembly.com/curation/",
-            Strings.toHexString(msg.sender),
-            "\\n\\nA project of public assembly."
+            "\\n\\nA project of Public Assembly."
         );
         items[1].quote = true;
         items[2].key = MetadataJSONKeys.keyImage;
@@ -219,9 +216,7 @@ contract SVGMetadataRenderer is IMetadataRenderer {
             Strings.toHexString(listing.curator),
             "\\n\\nTo remove this curation, burn the NFT. "
             "\\n\\nThis NFT is non-transferrable. "
-            "\\n\\nView or manage this curation at: "
-            "https://public---assembly.com/curation/",
-            Strings.toHexString(msg.sender)
+            "\\n\\nA project of Public Assembly."
         );
         items[1].quote = true;
         items[2].key = MetadataJSONKeys.keyImage;
